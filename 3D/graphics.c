@@ -47,9 +47,13 @@ void G_RunRenderLoop()
 		deltaTime = SDL_GetTicks();
 		int transformedVtxCnt = 0;
 
-		modelData.rotation.x += 0.01f;
-		modelData.rotation.y += 0.005f;
-		modelData.rotation.z += 0.015f;
+		if (G_debugStopRotation == 0)
+		{
+			modelData.rotation.x += 0.01f;
+			modelData.rotation.y += 0.005f;
+			modelData.rotation.z += 0.015f;
+		}
+
 		//modelData.translation.x += 0.01f;
 		modelData.translation.z = 8.0f;
 
@@ -88,11 +92,6 @@ void G_RunRenderLoop()
 				Mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
 				worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
 				v = Mat4_MulVec4(worldMatrix, v);
-
-				/*v = Mat4_MulVec4(scaleMat, v);
-				v = Mat4_MulVec4(rotMatX, v);
-				v = Mat4_MulVec4(rotMatZ, v);
-				v = Mat4_MulVec4(transMat, v);*/
 
 				faceVertecies[j] = M_Vec3FromVec4(v);
 			}
@@ -162,18 +161,10 @@ void G_RunRenderLoop()
 				G_DrawVertex(v2d2, 2);
 				G_DrawVertex(v2d3, 2);
 			}
-			
 		}
 		
 		SDLSystemRender();
 		G_ClearBuffer();
-
-		if (G_debugStopTransformation == 0)
-		{
-			thetaX += 0.001f;
-			thetaY += 0.005f;
-			thetaZ += 0.0025f;
-		}
 
 		deltaTime = SDL_GetTicks() - deltaTime;
 		G_CapFrameRate(deltaTime);

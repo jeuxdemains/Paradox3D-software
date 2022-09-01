@@ -79,7 +79,7 @@ int SDLSystemShouldQuit()
 
 		if (event.key.keysym.sym == SDLK_SPACE)
 		{
-			G_debugStopTransformation = !G_debugStopTransformation;
+			G_debugStopRotation = !G_debugStopRotation;
 		}
 
 		if (event.key.keysym.sym == SDLK_1)

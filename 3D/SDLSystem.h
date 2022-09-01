@@ -5,7 +5,7 @@
 
 int G_debugEnableBackfaceCulling;
 int G_debugInvertBackFaceCulling;
-int G_debugStopTransformation;
+int G_debugStopRotation;
 int G_debugRasterize;
 int G_debugDrawVertices;
 int G_debugDrawWireframe;

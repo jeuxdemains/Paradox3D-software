@@ -8,7 +8,7 @@
 
 extern int G_debugEnableBackfaceCulling;
 extern int G_debugInvertBackFaceCulling;
-extern int G_debugStopTransformation;
+extern int G_debugStopRotation;
 extern int G_debugRasterize;
 extern int G_debugDrawVertices;
 extern int G_debugDrawWireframe;
