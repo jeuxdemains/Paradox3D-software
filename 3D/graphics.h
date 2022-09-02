@@ -6,6 +6,11 @@
 
 #define FPS_TARGET 60
 
+typedef struct
+{
+	Vec3_t direction;
+} Light_t;
+
 extern int G_debugEnableBackfaceCulling;
 extern int G_debugInvertBackFaceCulling;
 extern int G_debugStopRotation;
@@ -23,3 +28,5 @@ uint32_t G_ColorFromZ(float depth, uint32_t color);
 void G_CapFrameRate(uint32_t deltaTime);
 void G_SortFacesByZ(TransformedModelFace_t* model, uint32_t cnt);
 void G_DrawVertex(Vec2_t v, uint32_t size);
+void G_ClipFaceZ(Vec3_t* v1, Vec3_t* v2, Vec3_t* v3);
+uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor);

@@ -13,6 +13,20 @@ Mat4_t Mat4_MakeIdentity(void)
 	return mat;
 };
 
+Mat4_t Mat4_MakePerspective(float aspect, float fov, float zNear, float zFar)
+{
+	Mat4_t m = { {{0}} };
+
+	m.m[0][0] = aspect * (1 / tanf(fov / 2.0f));		//aspect * half FOV
+	m.m[1][1] = 1 / tanf(fov / 2.0f);				//half FOV
+	m.m[2][2] = zFar / (zFar - zNear);					//normalized frustum Z len
+	m.m[3][3] = (-zFar * zNear) / (zFar * zNear);		//offset the Z projection plane
+	m.m[3][2] = 1.0f;									//save the original Z value
+														//when mul with Vec3 in the W component
+
+	return m;
+}
+
 Mat4_t Mat4_MakeScale(float sx, float sy, float sz)
 {
 	Mat4_t mat4 = Mat4_MakeIdentity();
@@ -134,6 +148,23 @@ Mat4_t Mat4_Mul4Mat4(Mat4_t m1, Mat4_t m2, Mat4_t m3, Mat4_t world)
 	result = Mat4_MulMat4(m1, world);
 	result = Mat4_MulMat4(m2, result);
 	result = Mat4_MulMat4(m3, result);
+
+	return result;
+}
+
+//Converting to NDC (normalized device context)
+Vec4_t Mat4_MulVec4ProjectionMat4(Vec4_t v, Mat4_t projMat)
+{
+	Vec4_t result = Mat4_MulVec4(projMat, v);
+
+	if (result.w != 0.0)
+	{
+		//divide all by the original Z saved in W
+		//at the projection matrix mul phase
+		result.x /= result.w;
+		result.y /= result.w;
+		result.z /= result.w;
+	}
 
 	return result;
 }

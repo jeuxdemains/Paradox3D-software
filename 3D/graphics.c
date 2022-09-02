@@ -1,7 +1,8 @@
 #include "graphics.h"
 
 Vec3_t camera = { 0, 0, 0 };
-float thetaX = 0.0f, thetaY = 0.0f, thetaZ = 0.0f;
+Light_t light = { { 0.5, 10.0, 1 } };
+float lightTheta = 0.0f;
 uint32_t drawColor = 0xFFFFFFFF;
 G_debugEnableBackfaceCulling = 1;
 G_debugInvertBackFaceCulling = 0;
@@ -14,10 +15,12 @@ Model_t modelData =
 	.modelPosition = 0.0f,
 	.vecCnt = 0,
 	.vertices = NULL,
-	.rotation = {0,0,0},
+	.rotation = {1.5f,1.0f, 1.0f},
 	.translation = {0,0,0},
 	.scale = {1.0f, 1.0f, 1.0f}
 };
+
+Mat4_t projMat;
 
 void G_RunRenderLoop()
 {
@@ -25,11 +28,20 @@ void G_RunRenderLoop()
 	SDL_Window* window = SDLSystemCreateWindow(800, 600);
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
 
+	//init aspect, fov, projection matrix
+	float fov = 3.14159 / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
+	float aspect = (float)_ScreenH / (float)_ScreenW;
+	float zNear = 0.1f;
+	float zFar = 100.0f;
+	projMat = Mat4_MakePerspective(aspect, fov, zNear, zFar);
+
+
 	//modelData.faces = &modelCubeFaces; //&faces; // &carFaces;
 	//modelData.vertices = &modelCube; //&model; // &carModel;
 	//modelData.facesCnt = sizeof(modelCubeFaces) / sizeof(*modelCubeFaces);
 	//modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
 
+	//init model
 	modelData.faces = faces; // &carFaces;
 	modelData.vertices = model; // &carModel;
 	modelData.facesCnt = sizeof(faces) / sizeof(*faces);
@@ -41,7 +53,7 @@ void G_RunRenderLoop()
 		modelData.vecCnt, modelData.facesCnt);
 
 	uint32_t deltaTime;
-	
+
 	while (SDLSystemShouldQuit() == 0)
 	{
 		deltaTime = SDL_GetTicks();
@@ -49,14 +61,16 @@ void G_RunRenderLoop()
 
 		if (G_debugStopRotation == 0)
 		{
-			modelData.rotation.x += 0.01f;
-			modelData.rotation.y += 0.005f;
-			modelData.rotation.z += 0.015f;
+			modelData.rotation.x += 0.001f;
+			modelData.rotation.y += 0.002f;
+			modelData.rotation.z += 0.0015f;
+			//lightTheta += 0.01f;
+			//light.light.x += 0.01f * cosf(lightTheta);
+			//light.light.y += 0.05 * sinf(lightTheta);
 		}
 
-		//modelData.translation.x += 0.01f;
-		modelData.translation.z = 8.0f;
-
+		modelData.translation.z = 14.0f;
+		
 		Mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
 			modelData.scale.y,
@@ -96,6 +110,8 @@ void G_RunRenderLoop()
 				faceVertecies[j] = M_Vec3FromVec4(v);
 			}
 
+			G_ClipFaceZ(&faceVertecies[0], &faceVertecies[1], &faceVertecies[2]);
+
 			faceVertecies[0] = M_TranslateVec3(faceVertecies[0], camera);
 			faceVertecies[1] = M_TranslateVec3(faceVertecies[1], camera);
 			faceVertecies[2] = M_TranslateVec3(faceVertecies[2], camera);
@@ -117,7 +133,7 @@ void G_RunRenderLoop()
 			transformed[transformedVtxCnt].vertices[1] = faceVertecies[1];
 			transformed[transformedVtxCnt].vertices[2] = faceVertecies[2];
 
-			//sort by Z
+			//save average Z
 			transformed[transformedVtxCnt].depth = (
 				faceVertecies[0].z + faceVertecies[1].z + faceVertecies[2].z) / 3.0f;
 
@@ -128,17 +144,50 @@ void G_RunRenderLoop()
 
 		for (int i = 0; i < transformedVtxCnt; i++)
 		{
-			Vec2_t v2d1 = M_ProjectVec3(&transformed[i].vertices[0], _ScreenW, _ScreenH);
-			Vec2_t v2d2 = M_ProjectVec3(&transformed[i].vertices[1], _ScreenW, _ScreenH);
-			Vec2_t v2d3 = M_ProjectVec3(&transformed[i].vertices[2], _ScreenW, _ScreenH);
+			//convert to quaternions to mul with matrices
+			Vec4_t v4d1 = M_Vec4FromVec3(transformed[i].vertices[0]);
+			Vec4_t v4d2 = M_Vec4FromVec3(transformed[i].vertices[1]);
+			Vec4_t v4d3 = M_Vec4FromVec3(transformed[i].vertices[2]);
 
-			//Vec3_t maxZVert = M_MaxZVec3(v1, v2, v3);
-			//uint32_t color = G_ColorFromZ(maxZVert, 0xFF, 0xFF, 0xFF);
+			//multiply by the projection matrix
+			v4d1 = Mat4_MulVec4ProjectionMat4(v4d1, projMat);
+			v4d2 = Mat4_MulVec4ProjectionMat4(v4d2, projMat);
+			v4d3 = Mat4_MulVec4ProjectionMat4(v4d3, projMat);
+
+			//convert to screen-space 2d vectors
+			Vec2_t v2d1 = M_Vec2FromVec4(v4d1);
+			Vec2_t v2d2 = M_Vec2FromVec4(v4d2);
+			Vec2_t v2d3 = M_Vec2FromVec4(v4d3);
+
+			//screen-space scale
+			M_Vec2ScaleFace(
+				&v2d1, &v2d2, &v2d3,
+				_ScreenH / 2.0f);
+
+			//screen-space translate
+			M_Vec2TranslateFace(
+				&v2d1, &v2d2, &v2d3,
+				_ScreenW / 2.0f, _ScreenH / 2.0f);
+
+			//lightBody.x += _ScreenW / 2.0f;
+			//lightBody.y += _ScreenH / 8.0f;
+
+			//calc light intensity
+			Vec3_t normal = M_NormalVec3(
+				transformed[i].vertices[0],
+				transformed[i].vertices[1],
+				transformed[i].vertices[2]);
+
+			float lightPerc = -M_DotVec3(normal, light.direction);
+			if (lightPerc < 0.1f)
+				lightPerc = 0.1f;
+			if (lightPerc > 0.9f)
+				lightPerc = 0.9f;
 
 			//rasterize
 			if (G_debugRasterize)
 			{
-				uint32_t color = G_ColorFromZ(transformed[i].depth, 0x00FFFFFF);
+				uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
 				G_SetDrawColor(color);
 				G_RasterTriangle(v2d1, v2d2, v2d3);
 			}
@@ -146,7 +195,8 @@ void G_RunRenderLoop()
 			//wireframe
 			if (G_debugDrawWireframe)
 			{
-				G_SetDrawColor(0x0055FFFF);
+				uint32_t color = G_LightIntensity(0x0055FFFF, lightPerc);
+				G_SetDrawColor(color);
 				G_DrawLine(v2d1, v2d2);
 				G_DrawLine(v2d2, v2d3);
 				G_DrawLine(v2d3, v2d1);
@@ -161,6 +211,10 @@ void G_RunRenderLoop()
 				G_DrawVertex(v2d2, 2);
 				G_DrawVertex(v2d3, 2);
 			}
+
+			//render light body
+			/*G_SetDrawColor(0xAAAAAAFF);
+			G_DrawVertex(lightBody, 12);*/
 		}
 		
 		SDLSystemRender();
@@ -171,6 +225,28 @@ void G_RunRenderLoop()
 	}
 
 	SDLSystemShutdown();
+}
+
+uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor)
+{
+	uint32_t r = (originalColor & 0xFF000000) * percentageFactor;
+	uint32_t g = (originalColor & 0x00FF0000) * percentageFactor;
+	uint32_t b = (originalColor & 0x0000FF00) * percentageFactor;
+	uint32_t a = (originalColor & 0x000000FF);
+
+	uint32_t newColor = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | a;
+
+	return newColor;
+}
+
+void G_ClipFaceZ(Vec3_t* v1, Vec3_t* v2, Vec3_t* v3)
+{
+	if (v1->z < 0.01f)
+		v1->z = 0.01f;
+	if (v2->z < 0.01f)
+		v2->z = 0.01f;
+	if (v3->z < 0.01f)
+		v3->z = 0.01f;
 }
 
 void G_DrawVertex(Vec2_t v, uint32_t size)
@@ -230,14 +306,15 @@ uint32_t G_ColorFromZ(float depth, uint32_t color)
 	uint8_t b = c[1];
 	uint8_t a = c[0];
 
+	float factor = depth * 13.0f;
 	if (r > 0)
-		r -= depth * 17.0f;
+		r -= factor;
 
 	if (b > 0)
-		b -= depth * 17.0f;
+		b -= factor;
 
 	if (g > 0)
-		g -= depth * 17.0f;
+		g -= factor;
 
 	uint32_t clr = r << 24 | g << 16 | b << 8 | 0xFF; //(uint32_t)((float)color - (v.z*50));
 

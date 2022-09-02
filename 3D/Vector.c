@@ -114,3 +114,41 @@ Vec3_t M_Vec3FromVec4(Vec4_t vec)
 	Vec3_t vec3 = { vec.x, vec.y, vec.z };
 	return vec3;
 }
+
+Vec2_t M_Vec2FromVec3(Vec3_t v)
+{
+	Vec2_t v2;
+	v2.x = v.x;
+	v2.y = v.y;
+
+	return v2;
+}
+
+Vec2_t M_Vec2FromVec4(Vec4_t v)
+{
+	Vec2_t v2;
+	v2.x = v.x;
+	v2.y = v.y;
+
+	return v2;
+}
+
+Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
+{
+	p1->x *= scaleFactor;
+	p1->y *= scaleFactor;
+	p2->x *= scaleFactor;
+	p2->y *= scaleFactor;
+	p3->x *= scaleFactor;
+	p3->y *= scaleFactor;
+}
+
+Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y)
+{
+	p1->x += x;
+	p1->y += y;
+	p2->x += x;
+	p2->y += y;
+	p3->x += x;
+	p3->y += y;
+}
