@@ -17,13 +17,22 @@ extern int G_debugStopRotation;
 extern int G_debugRasterize;
 extern int G_debugDrawVertices;
 extern int G_debugDrawWireframe;
+extern int G_debugRenderTextured;
+
+extern Position_t worldPosition;
 
 void G_RunRenderLoop();
 void G_DrawPoint(Vec2_t v);
+void G_DrawPointI(int x, int y);
 void G_DrawPointColor(Vec2_t v, uint32_t color);
+void G_DrawTexel(int x, int y, uint32_t* texture,
+	Vec2_t a, Vec2_t b, Vec2_t c,
+	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c);
 void G_DrawLine(Vec2_t p1, Vec2_t p2);
+void G_DrawLineI(Vec2i_t p1, Vec2i_t p2);
 void G_ClearBuffer();
 void G_SetDrawColor(uint32_t colorHex);
+void G_DrawXYColor(int x, int y, uint32_t color);
 uint32_t G_ColorFromZ(float depth, uint32_t color);
 void G_CapFrameRate(uint32_t deltaTime);
 void G_SortFacesByZ(TransformedModelFace_t* model, uint32_t cnt);

@@ -8,6 +8,12 @@ typedef struct
 
 typedef struct
 {
+	int x, y;
+} Vec2i_t;
+
+
+typedef struct
+{
 	Vec2_t points[3];
 } ScreenTriangle_t;
 
@@ -28,6 +34,7 @@ Vec2_t M_Vec2FromVec3(Vec3_t v);
 Vec2_t M_Vec2FromVec4(Vec4_t v);
 Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor);
 Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y);
+Vec2_t M_Vec2Sub(Vec2_t vec1, Vec2_t vec2);
 
 /// VECTOR 3
 Vec3_t M_MulVec3(Vec3_t p1, Vec3_t p2);

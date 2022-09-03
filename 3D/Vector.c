@@ -13,6 +13,16 @@ Vec2_t M_Vec2Add(Vec2_t v1, Vec2_t v2)
 	return v3;
 }
 
+Vec2_t M_Vec2Sub(Vec2_t vec1, Vec2_t vec2)
+{
+	Vec2_t vec;
+	vec.x = vec1.x - vec2.x;
+	vec.y = vec1.y - vec2.y;
+
+	return vec;
+}
+
+
 /// 
 /// VECTOR 3
 ///

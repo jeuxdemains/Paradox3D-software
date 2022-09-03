@@ -1,12 +1,14 @@
 #include "graphics.h"
 
-Vec3_t camera = { 0, 0, 0 };
-Light_t light = { { 0.5, 10.0, 1 } };
-float lightTheta = 0.0f;
-uint32_t drawColor = 0xFFFFFFFF;
 G_debugEnableBackfaceCulling = 1;
-G_debugInvertBackFaceCulling = 0;
+G_debugInvertBackFaceCulling = 0; //1 = normal; -1 = inverted
 G_debugDrawWireframe = 1;
+G_debugRenderTextured = 1;
+
+Vec3_t camera = { 0, 0, 0 };
+Light_t light = { { 0.0, 0.0, 1 } };
+uint32_t drawColor = 0xFFFFFFFF;
+int vertDirCW = -1; //1 = CW; -1 = CCW
 
 Model_t modelData =
 {
@@ -15,12 +17,13 @@ Model_t modelData =
 	.modelPosition = 0.0f,
 	.vecCnt = 0,
 	.vertices = NULL,
-	.rotation = {1.5f,1.0f, 1.0f},
+	.rotation = {0,0,0},
 	.translation = {0,0,0},
 	.scale = {1.0f, 1.0f, 1.0f}
 };
 
 Mat4_t projMat;
+TransformedModelFace_t transformed[1804];
 
 void G_RunRenderLoop()
 {
@@ -29,25 +32,29 @@ void G_RunRenderLoop()
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
 
 	//init aspect, fov, projection matrix
-	float fov = 3.14159 / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
+	float fov = 3.14159f / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
 	float aspect = (float)_ScreenH / (float)_ScreenW;
 	float zNear = 0.1f;
 	float zFar = 100.0f;
 	projMat = Mat4_MakePerspective(aspect, fov, zNear, zFar);
 
-
-	//modelData.faces = &modelCubeFaces; //&faces; // &carFaces;
-	//modelData.vertices = &modelCube; //&model; // &carModel;
-	//modelData.facesCnt = sizeof(modelCubeFaces) / sizeof(*modelCubeFaces);
-	//modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
+	//init texture
+	T_meshTexture = (uint32_t*)REDBRICK_TEXTURE;
+	T_texWidth = 64;
+	T_texHeight = 64;
 
 	//init model
-	modelData.faces = faces; // &carFaces;
-	modelData.vertices = model; // &carModel;
-	modelData.facesCnt = sizeof(faces) / sizeof(*faces);
-	modelData.vecCnt = sizeof(model) / sizeof(*model);
+	modelData.faces = modelCubeFaces; //&faces; // &carFaces;
+	modelData.vertices = modelCube; //&model; // &carModel;
+	modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
+	modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
 
-	TransformedModelFace_t transformed[1804];
+	//init model
+	//modelData.faces = faces; // &carFaces;
+	//modelData.vertices = model; // &carModel;
+	//modelData.facesCnt = sizeof(faces) / sizeof(*faces);
+	//modelData.vecCnt = sizeof(model) / sizeof(*model);
+
 
 	printf("Rendering %d vertices with %d faces\n",
 		modelData.vecCnt, modelData.facesCnt);
@@ -57,20 +64,17 @@ void G_RunRenderLoop()
 	while (SDLSystemShouldQuit() == 0)
 	{
 		deltaTime = SDL_GetTicks();
-		int transformedVtxCnt = 0;
 
 		if (G_debugStopRotation == 0)
 		{
-			modelData.rotation.x += 0.001f;
-			modelData.rotation.y += 0.002f;
-			modelData.rotation.z += 0.0015f;
-			//lightTheta += 0.01f;
-			//light.light.x += 0.01f * cosf(lightTheta);
-			//light.light.y += 0.05 * sinf(lightTheta);
+			modelData.rotation.x += 0.01f;
+			modelData.rotation.y += 0.02f;
+			modelData.rotation.z += 0.015f;
 		}
 
-		modelData.translation.z = 14.0f;
-		
+		//zoom out the model
+		modelData.translation.z = 8.0f;
+
 		Mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
 			modelData.scale.y,
@@ -88,20 +92,23 @@ void G_RunRenderLoop()
 		Mat4_t rotMatZ = Mat4_MakeRotationZ(modelData.rotation.z);
 
 		Vec3_t faceVertecies[3];
+		int transformedVtxCnt = 0;
 
 		for (uint32_t i = 0; i < modelData.facesCnt; i += 1)
 		{
-			int a = (modelData.faces + FACE_POINTS_CNT * i)[0];
-			int b = (modelData.faces + FACE_POINTS_CNT * i)[1];
-			int c = (modelData.faces + FACE_POINTS_CNT * i)[2];
+			FaceTex_t face = modelData.faces[i];
+			int a = modelData.faces[i].a;
+			int b = modelData.faces[i].b;
+			int c = modelData.faces[i].c;
 
-			faceVertecies[0] = modelData.vertices[a];
-			faceVertecies[1] = modelData.vertices[b];
-			faceVertecies[2] = modelData.vertices[c];
-
+			faceVertecies[0] = modelData.vertices[a - 1];
+			faceVertecies[1] = modelData.vertices[b - 1];
+			faceVertecies[2] = modelData.vertices[c - 1];
+			
 			for (int j = 0; j < 3; j++)
 			{
 				Vec4_t v = M_Vec4FromVec3(faceVertecies[j]);
+
 				Mat4_t worldMatrix = Mat4_MakeIdentity();
 				Mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
 				worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
@@ -132,6 +139,11 @@ void G_RunRenderLoop()
 			transformed[transformedVtxCnt].vertices[0] = faceVertecies[0];
 			transformed[transformedVtxCnt].vertices[1] = faceVertecies[1];
 			transformed[transformedVtxCnt].vertices[2] = faceVertecies[2];
+
+			//copy texture coordinates
+			transformed[transformedVtxCnt].texCrds[0] = face.a_uv;
+			transformed[transformedVtxCnt].texCrds[1] = face.b_uv;
+			transformed[transformedVtxCnt].texCrds[2] = face.c_uv;
 
 			//save average Z
 			transformed[transformedVtxCnt].depth = (
@@ -169,20 +181,27 @@ void G_RunRenderLoop()
 				&v2d1, &v2d2, &v2d3,
 				_ScreenW / 2.0f, _ScreenH / 2.0f);
 
-			//lightBody.x += _ScreenW / 2.0f;
-			//lightBody.y += _ScreenH / 8.0f;
-
 			//calc light intensity
 			Vec3_t normal = M_NormalVec3(
 				transformed[i].vertices[0],
 				transformed[i].vertices[1],
 				transformed[i].vertices[2]);
 
-			float lightPerc = -M_DotVec3(normal, light.direction);
+			float lightPerc = vertDirCW * M_DotVec3(normal, light.direction);
 			if (lightPerc < 0.1f)
 				lightPerc = 0.1f;
 			if (lightPerc > 0.9f)
 				lightPerc = 0.9f;
+
+			//texture map
+			if (G_debugRenderTextured)
+			{
+				G_RenderTexturedTriangle(v2d1, v2d2, v2d3, 
+					transformed[i].texCrds[0],
+					transformed[i].texCrds[1],
+					transformed[i].texCrds[2], 
+					T_meshTexture);
+			}
 
 			//rasterize
 			if (G_debugRasterize)
@@ -211,10 +230,6 @@ void G_RunRenderLoop()
 				G_DrawVertex(v2d2, 2);
 				G_DrawVertex(v2d3, 2);
 			}
-
-			//render light body
-			/*G_SetDrawColor(0xAAAAAAFF);
-			G_DrawVertex(lightBody, 12);*/
 		}
 		
 		SDLSystemRender();
@@ -278,20 +293,30 @@ void G_SortFacesByZ(TransformedModelFace_t* model, uint32_t cnt)
 		{
 			if (model[i].depth < model[j].depth)
 			{
-				Face_t tmp;
-				tmp.face[0] = model[i].vertices[0];
-				tmp.face[1] = model[i].vertices[1];
-				tmp.face[2] = model[i].vertices[2];
+				TransformedModelFace_t tmp;
+				tmp.vertices[0] = model[i].vertices[0];
+				tmp.vertices[1] = model[i].vertices[1];
+				tmp.vertices[2] = model[i].vertices[2];
+				tmp.texCrds[0] = model[i].texCrds[0];
+				tmp.texCrds[1] = model[i].texCrds[1];
+				tmp.texCrds[2] = model[i].texCrds[2];
 				float tmpDepth = model[i].depth;
 
 				model[i].vertices[0] = model[j].vertices[0];
 				model[i].vertices[1] = model[j].vertices[1];
 				model[i].vertices[2] = model[j].vertices[2];
+				model[i].texCrds[0] = model[j].texCrds[0];
+				model[i].texCrds[1] = model[j].texCrds[1];
+				model[i].texCrds[2] = model[j].texCrds[2];
+
 				model[i].depth = model[j].depth;
 
-				model[j].vertices[0] = tmp.face[0];
-				model[j].vertices[1] = tmp.face[1];
-				model[j].vertices[2] = tmp.face[2];
+				model[j].vertices[0] = tmp.vertices[0];
+				model[j].vertices[1] = tmp.vertices[1];
+				model[j].vertices[2] = tmp.vertices[2];
+				model[j].texCrds[0] = tmp.texCrds[0];
+				model[j].texCrds[1] = tmp.texCrds[1];
+				model[j].texCrds[2] = tmp.texCrds[2];
 				model[j].depth = tmpDepth;
 			}
 		}
@@ -337,6 +362,17 @@ void G_DrawPoint(Vec2_t v)
 	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = drawColor;
 }
 
+void G_DrawPointI(int x, int y)
+{
+	if (x < 0 || x >= _ScreenW || y < 0 || y >= _ScreenH)
+		return;
+
+	if (_ScreenW * (uint32_t)y + (uint32_t)x > _ScreenW * _ScreenH)
+		return;
+
+	screenBuffer[_ScreenW * (uint32_t)y + (uint32_t)x] = drawColor;
+}
+
 void G_DrawPointColor(Vec2_t v, uint32_t color)
 {
 	if (v.x < 0 || v.x > _ScreenW || v.y < 0 || v.y > _ScreenH)
@@ -346,6 +382,17 @@ void G_DrawPointColor(Vec2_t v, uint32_t color)
 		return;
 
 	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = color;
+}
+
+void G_DrawXYColor(int x, int y, uint32_t color)
+{
+	if (x < 0 || y > _ScreenW || x < 0 || y > _ScreenH)
+		return;
+
+	if (_ScreenW * (uint32_t)y + (uint32_t)x > _ScreenW * _ScreenH)
+		return;
+
+	screenBuffer[_ScreenW * (uint32_t)y + (uint32_t)x] = color;
 }
 
 void G_DrawLineXY2(int x0, int y0, int x1, int y1)
@@ -375,10 +422,17 @@ void G_DrawLineXY2(int x0, int y0, int x1, int y1)
 
 void G_DrawLine(Vec2_t p1, Vec2_t p2)
 {
-	int x0 = (int)p1.x, 
-		y0 = (int)p1.y, 
-		x1 = (int)p2.x, 
-		y1 = (int)p2.y;
+	Vec2i_t pi1 = { (int)p1.x, (int)p1.y };
+	Vec2i_t pi2 = { (int)p2.x, (int)p2.y };
+	G_DrawLineI(pi1, pi2);
+}
+
+void G_DrawLineI(Vec2i_t p1, Vec2i_t p2)
+{
+	int x0 = p1.x, 
+		y0 = p1.y, 
+		x1 = p2.x, 
+		y1 = p2.y;
 
 	int dx;
 	if (x1 > x0)
@@ -398,8 +452,7 @@ void G_DrawLine(Vec2_t p1, Vec2_t p2)
 
 	for (;;)
 	{
-		Vec2_t p = { .x = (float)x0, .y = (float)y0 };
-		G_DrawPoint(p);
+		G_DrawPointI(x0, y0);
 		if (x0 == x1 && y0 == y1) break;
 		e2 = err;
 		if (e2 > -dx) { err -= dy; x0 += sx; }
@@ -415,21 +468,21 @@ void G_ClearBuffer()
 //p3 = midPoint
 void G_RasterTopHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 {
-	float inv_slope1 = (p2.x - p1.x) / (p2.y - p1.y);
-	float inv_slope2 = (p3.x - p1.x) / (p3.y - p1.y);
-	float x_start = p1.x;
-	float x_end = p1.x;
+	float inv_slope1 = (float)((int)p2.x - (int)p1.x) / ((int)p2.y - (int)p1.y);
+	float inv_slope2 = (float)((int)p3.x - (int)p1.x) / ((int)p3.y - (int)p1.y);
+	float x_start = (int)p1.x;
+	float x_end = (int)p1.x;
 
 	//TOP to BOTTOM
-	for (int y = (int)ceil(p1.y); y <= (int)floor(p3.y); y++)
+	for (int y = (int)p1.y; y <= (int)p3.y; y++)
 	{
-		Vec2_t a, b;
-		a.x = x_start;
-		a.y = (float)y;
-		b.x = x_end;
-		b.y = (float)y;
+		Vec2i_t a, b;
+		a.x = (int)x_start;
+		a.y = y;
+		b.x = (int)x_end;
+		b.y = y;
 
-		G_DrawLine(a, b);
+		G_DrawLineI(a, b);
 
 		x_start += inv_slope1;
 		x_end += inv_slope2;
@@ -440,21 +493,21 @@ void G_RasterTopHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 void G_RasterBottomHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 {
 	//Draw bottom to top
-	float inv_slope1 = (p3.x - p1.x) / (p3.y - p1.y);
-	float inv_slope2 = (p3.x - p2.x) / (p3.y - p2.y);
-	float x_start = p3.x;
-	float x_end = p3.x;
+	float inv_slope1 = (float)((int)p3.x - (int)p1.x) / ((int)p3.y - (int)p1.y);
+	float inv_slope2 = (float)((int)p3.x - (int)p2.x) / ((int)p3.y - (int)p2.y);
+	float x_start = (int)p3.x;
+	float x_end = (int)p3.x;
 
 	//BOTTOM to TOP
-	for (int y = p3.y; y >= p1.y; y--)
+	for (int y = (int)p3.y; y >= (int)p1.y; y--)
 	{
-		Vec2_t a, b;
+		Vec2i_t a, b;
 		a.x = x_start;
-		a.y = (float)y;
+		a.y = y;
 		b.x = x_end;
-		b.y = (float)y;
+		b.y = y;
 
-		G_DrawLine(a, b);
+		G_DrawLineI(a, b);
 
 		x_start -= inv_slope1;
 		x_end -= inv_slope2;
@@ -508,3 +561,108 @@ void G_RasterTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 	}
 }
 
+void G_RenderTexturedTriangle(
+	Vec2_t p1, Vec2_t p2, Vec2_t p3, 
+	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3, 
+	uint32_t* texture)
+{
+	M_SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
+
+	int x0 = (int)p1.x;
+	int y0 = (int)p1.y;
+	int x1 = (int)p2.x;
+	int y1 = (int)p2.y;
+	int x2 = (int)p3.x;
+	int y2 = (int)p3.y;
+
+	Vec2_t point_a = { x0, y0 };
+	Vec2_t point_b = { x1, y1 };
+	Vec2_t point_c = { x2, y2 };
+
+
+	//render top triangle
+	float inv_slope1 = 0;
+	float inv_slope2 = 0;
+
+	if (y1 - y0 != 0) 
+		inv_slope1 = (float)(x1 - x0) / abs(y1 - y0);
+	if (y2 - y0 != 0) 
+		inv_slope2 = (float)(x2 - x0) / abs(y2 - y0);
+
+	if (y1 - y0 != 0)
+	{
+		for (int y = y0; y < y1; y++)
+		{
+			int x_start = x1 + (y - y1) * inv_slope1;
+			int x_end = x0 + (y - y0) * inv_slope2;
+
+			if (x_end < x_start)
+				M_SwapInt(&x_start, &x_end);
+
+			for (int x = x_start; x < x_end; x++)
+			{
+				G_DrawTexel(
+					x, y, texture,
+					point_a, point_b, point_c,
+					tp1, tp2, tp3
+				);
+			}
+		}
+	}
+	
+	//render bottom triangle
+	inv_slope1 = 0;
+	inv_slope2 = 0;
+
+	if (y2 - y1 != 0)
+		inv_slope1 = (float)(x2 - x1) / abs(y2 - y1);
+	if (y2 - y0 != 0)
+		inv_slope2 = (float)(x2 - x0) / abs(y2 - y0);
+
+	if (y2 - y1 != 0)
+	{
+		for (int y = y1; y < y2; y++)
+		{
+			int x_start = x1 + (y - y1) * inv_slope1;
+			int x_end = x0 + (y - y0) * inv_slope2;
+
+			if (x_end < x_start)
+				M_SwapInt(&x_start, &x_end);
+
+			for (int x = x_start; x < x_end; x++)
+			{
+				//G_DrawXYColor(x, y, 0xFFAA00FF);
+				G_DrawTexel(
+					x, y, texture, 
+					point_a, point_b, point_c,
+					tp1, tp2, tp3
+				);
+			}
+		}
+	}
+}
+
+void G_DrawTexel(int x, int y, uint32_t* texture,
+	Vec2_t a, Vec2_t b, Vec2_t c,
+	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c)
+{
+	Vec2_t p = { x, y };
+	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
+
+	float alpha = bWeights.x;
+	float beta = bWeights.y;
+	float gamma = bWeights.z;
+
+	//perform barycentric weights U V interpolation
+	float interp_u = uv_a.u * alpha + uv_b.u * beta + uv_c.u * gamma;
+	float interp_v = uv_a.v * alpha + uv_b.v * beta + uv_c.v * gamma;
+
+	//get pixel offset within the texture
+	int tex_x = abs((int)(interp_u * T_texWidth));
+	int tex_y = abs((int)(interp_v * T_texHeight));
+
+	if ((T_texWidth * tex_y) + tex_x > 64 * 64 * sizeof(uint8_t))
+		return;
+
+	G_DrawXYColor(x, y, texture[(T_texWidth * tex_y) + tex_x]);
+}

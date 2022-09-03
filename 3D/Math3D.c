@@ -1,5 +1,12 @@
 #include "Math3D.h"
 
+void M_SwapInt(int* n1, int* n2)
+{
+	int tmp = *n1;
+	*n1 = *n2;
+	*n2 = tmp;
+}
+
 Vec3_t M_TranslateVec3(Vec3_t vector, Vec3_t pos)
 {
 	return M_AddVec3(vector, pos);
@@ -94,6 +101,22 @@ void M_Vec2Swap(Vec2_t* p1, Vec2_t* p2)
 	p2->y = tmp.y;
 }
 
+void M_Vec2UVSwap(Vec2_t* p1, Vec2_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
+{
+	Vec2_t tmp = *p1;
+	Tex2_t tmpTex = *p1uv;
+
+	p1->x = p2->x;
+	p1->y = p2->y;
+	p1uv->u = p2uv->u;
+	p1uv->v = p2uv->v;
+
+	p2->x = tmp.x;
+	p2->y = tmp.y;
+	p2uv->u = tmpTex.u;
+	p2uv->v = tmpTex.v;
+}
+
 //sort triangle vertices by Y coordinate
 void M_SortTrianglePointsY(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3)
 {
@@ -113,6 +136,26 @@ void M_SortTrianglePointsY(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3)
 	}
 }
 
+void M_SortTexturedTrianglePointsY(
+	Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, 
+	Tex2_t* p1uv, Tex2_t* p2uv, Tex2_t* p3uv)
+{
+	if ((int)p1->y > (int)p2->y)
+	{
+		M_Vec2UVSwap(p1, p2, p1uv, p2uv);
+	}
+
+	if ((int)p2->y > (int)p3->y)
+	{
+		M_Vec2UVSwap(p2, p3, p2uv, p3uv);
+	}
+
+	if ((int)p1->y > (int)p2->y)
+	{
+		M_Vec2UVSwap(p1, p2, p1uv, p2uv);
+	}
+}
+
 //calculate triangle flat-bottom / flat-top
 //required for rasterization
 Vec2_t M_CalcTriangleMidPoint(Vec2_t p1, Vec2_t p2, Vec2_t p3)
@@ -122,4 +165,25 @@ Vec2_t M_CalcTriangleMidPoint(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 	pMiddle.x = ((p3.x - p1.x) * (p2.y - p1.y)) / (p3.y - p1.y) + p1.x;
 
 	return pMiddle;
+}
+
+
+//calculate the barycentric weights of point P
+//required by the affine texture mapping
+Vec3_t M_BarycentricWeights(Vec2_t a, Vec2_t b, Vec2_t c, Vec2_t p)
+{
+	Vec2_t ab = M_Vec2Sub(b, a);
+	Vec2_t bc = M_Vec2Sub(c, b);
+	Vec2_t ac = M_Vec2Sub(c, a);
+	Vec2_t ap = M_Vec2Sub(p, a);
+	Vec2_t bp = M_Vec2Sub(p, b);
+
+	float triangle_area_abc = (ab.x * ac.y - ab.y * ac.x);
+	float alpha = (bc.x * bp.y - bp.x * bc.y) / triangle_area_abc;
+	float beta = (ap.x * ac.y - ac.x * ap.y) / triangle_area_abc;
+	float gamma = 1.0f - alpha - beta;
+
+	Vec3_t weights = { alpha, beta, gamma };
+
+	return weights;
 }

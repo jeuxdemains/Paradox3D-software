@@ -1,5 +1,11 @@
 #include "SDLSystem.h"
 
+Position_t worldPosition =
+{ 
+	.pos = {0,0,0}
+};
+
+
 void SDLSystemInit()
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -37,7 +43,7 @@ SDL_Window* SDLSystemCreateWindow(uint32_t w, uint32_t h)
 	_ScreenH = h;
 	SDLSystemInitScreenBuffer(w, h);
 	sdlSystemWindow = SDL_CreateWindow(
-		"3D from scratch", SDL_WINDOWPOS_CENTERED, 
+		"Paradox 3D", SDL_WINDOWPOS_CENTERED, 
 		SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_SHOWN);
 
 	return sdlSystemWindow;
@@ -66,35 +72,59 @@ int SDLSystemShouldQuit()
 		if (event.key.keysym.sym == SDLK_b)
 		{
 			G_debugEnableBackfaceCulling = !G_debugEnableBackfaceCulling;
-			if (G_debugEnableBackfaceCulling == 0) DebugMessage("Back-face culling disabled");
-			else DebugMessage("Back-face culling enabled");
+
+			if (G_debugEnableBackfaceCulling == 0) 
+				DebugMessage("Back-face culling disabled");
+			else 
+				DebugMessage("Back-face culling enabled");
 		}
 
 		if (event.key.keysym.sym == SDLK_r)
 		{
 			G_debugInvertBackFaceCulling = !G_debugInvertBackFaceCulling;
-			if (G_debugInvertBackFaceCulling == 0) DebugMessage("Back-face culling set to CCW");
-			else DebugMessage("Back-face culling set to CW");
+
+			if (G_debugInvertBackFaceCulling == 0) 
+				DebugMessage("Back-face culling set to CCW");
+			else 
+				DebugMessage("Back-face culling set to CW");
 		}
 
 		if (event.key.keysym.sym == SDLK_SPACE)
-		{
 			G_debugStopRotation = !G_debugStopRotation;
-		}
 
 		if (event.key.keysym.sym == SDLK_1)
-		{
 			G_debugRasterize = !G_debugRasterize;
-		}
 
 		if (event.key.keysym.sym == SDLK_2)
-		{
 			G_debugDrawVertices = !G_debugDrawVertices;
-		}
 
 		if (event.key.keysym.sym == SDLK_3)
-		{
 			G_debugDrawWireframe = !G_debugDrawWireframe;
+
+		if (event.key.keysym.sym == SDLK_4)
+			G_debugRenderTextured = !G_debugRenderTextured;
+
+
+		if (event.key.keysym.sym == SDLK_w)
+		{
+			worldPosition.pos.z += 1.0f * cosf(worldPosition.dirAngle);
+		}
+
+		if (event.key.keysym.sym == SDLK_s)
+		{
+			worldPosition.pos.z -= 1.0f * cosf(worldPosition.dirAngle);
+		}
+
+		if (event.key.keysym.sym == SDLK_a)
+		{
+			worldPosition.dirAngle += 1.0f;
+			worldPosition.pos.x += 1.0f * cosf(worldPosition.dirAngle);
+		}
+
+		if (event.key.keysym.sym == SDLK_d)
+		{
+			worldPosition.dirAngle -= 1.0f;
+			worldPosition.pos.x -= 1.0f * cosf(worldPosition.dirAngle);
 		}
 	}
 

@@ -147,6 +147,7 @@
     <ClCompile Include="Math3D.c" />
     <ClCompile Include="Matrix.c" />
     <ClCompile Include="SDLSystem.c" />
+    <ClCompile Include="Texture.c" />
     <ClCompile Include="Vector.c" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="SDLSystem.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
