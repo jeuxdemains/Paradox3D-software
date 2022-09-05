@@ -22,6 +22,25 @@ Vec2_t M_Vec2Sub(Vec2_t vec1, Vec2_t vec2)
 	return vec;
 }
 
+Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
+{
+	p1->x *= scaleFactor;
+	p1->y *= scaleFactor;
+	p2->x *= scaleFactor;
+	p2->y *= scaleFactor;
+	p3->x *= scaleFactor;
+	p3->y *= scaleFactor;
+}
+
+Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y)
+{
+	p1->x += x;
+	p1->y += y;
+	p2->x += x;
+	p2->y += y;
+	p3->x += x;
+	p3->y += y;
+}
 
 /// 
 /// VECTOR 3
@@ -95,6 +114,18 @@ Vec3_t M_NormalVec3(Vec3_t p1, Vec3_t p2, Vec3_t p3)
 	return normal;
 }
 
+Vec3_t M_NormalizeVec3(Vec3_t v)
+{
+	Vec3_t vec;
+	float len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+
+	vec.x = v.x / len;
+	vec.y = v.y / len;
+	vec.z = v.z / len;
+
+	return vec;
+}
+
 Vec3_t M_MaxZVec3(Vec3_t p1, Vec3_t p2, Vec3_t p3)
 {
 	Vec3_t p;
@@ -117,6 +148,12 @@ Vec4_t M_Vec4FromVec3(Vec3_t vec)
 {
 	Vec4_t vec4 = { vec.x, vec.y, vec.z, 1.0f };
 	return vec4;
+}
+
+Vec4_t M_Vec4FromVec2(Vec2_t vec)
+{
+	Vec4_t v = { .x = vec.x, .y = vec.y, .z = 0, .w = 0 };
+	return v;
 }
 
 Vec3_t M_Vec3FromVec4(Vec4_t vec)
@@ -143,22 +180,24 @@ Vec2_t M_Vec2FromVec4(Vec4_t v)
 	return v2;
 }
 
-Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
+Vec4_t M_MulVec4(Vec4_t p1, Vec4_t p2)
 {
-	p1->x *= scaleFactor;
-	p1->y *= scaleFactor;
-	p2->x *= scaleFactor;
-	p2->y *= scaleFactor;
-	p3->x *= scaleFactor;
-	p3->y *= scaleFactor;
+	Vec4_t v;
+	v.x = p1.x * p2.x;
+	v.y = p1.y * p2.y;
+	v.z = p1.z * p2.z;
+	v.w = p1.w * p2.w;
+
+	return v;
 }
 
-Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y)
+Vec4_t M_AddVec4(Vec4_t p1, Vec4_t p2)
 {
-	p1->x += x;
-	p1->y += y;
-	p2->x += x;
-	p2->y += y;
-	p3->x += x;
-	p3->y += y;
+	Vec4_t v;
+	v.x = p1.x + p2.x;
+	v.y = p1.y + p2.y;
+	v.z = p1.z + p2.z;
+	v.w = p1.w;
+
+	return v;
 }

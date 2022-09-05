@@ -6,9 +6,9 @@ G_debugDrawWireframe = 1;
 G_debugRenderTextured = 1;
 
 Vec3_t camera = { 0, 0, 0 };
-Light_t light = { { 0.0, 0.0, 1 } };
+Light_t light = { { 0.0f, 0.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
-int vertDirCW = -1; //1 = CW; -1 = CCW
+float vertDirCW = -1.0f; //1 = CW; -1 = CCW
 
 Model_t modelData =
 {
@@ -68,12 +68,12 @@ void G_RunRenderLoop()
 		if (G_debugStopRotation == 0)
 		{
 			modelData.rotation.x += 0.01f;
-			modelData.rotation.y += 0.02f;
+			modelData.rotation.y += 0.015f;
 			modelData.rotation.z += 0.015f;
 		}
 
 		//zoom out the model
-		modelData.translation.z = 8.0f;
+		modelData.translation.z = 6.0f;
 
 		Mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
@@ -105,6 +105,7 @@ void G_RunRenderLoop()
 			faceVertecies[1] = modelData.vertices[b - 1];
 			faceVertecies[2] = modelData.vertices[c - 1];
 			
+
 			for (int j = 0; j < 3; j++)
 			{
 				Vec4_t v = M_Vec4FromVec3(faceVertecies[j]);
@@ -182,25 +183,28 @@ void G_RunRenderLoop()
 				_ScreenW / 2.0f, _ScreenH / 2.0f);
 
 			//calc light intensity
-			Vec3_t normal = M_NormalVec3(
-				transformed[i].vertices[0],
-				transformed[i].vertices[1],
-				transformed[i].vertices[2]);
-
-			float lightPerc = vertDirCW * M_DotVec3(normal, light.direction);
-			if (lightPerc < 0.1f)
-				lightPerc = 0.1f;
-			if (lightPerc > 0.9f)
-				lightPerc = 0.9f;
+			float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 
 			//texture map
 			if (G_debugRenderTextured)
 			{
-				G_RenderTexturedTriangle(v2d1, v2d2, v2d3, 
+				Vec4_t v1 = M_Vec4FromVec2(v2d1);
+				Vec4_t v2 = M_Vec4FromVec2(v2d2);
+				Vec4_t v3 = M_Vec4FromVec2(v2d3);
+
+				v1.z = v4d1.z;
+				v1.w = v4d1.w;
+				v2.z = v4d2.z;
+				v2.w = v4d2.w;
+				v3.z = v4d3.z;
+				v3.w = v4d3.w;
+
+				G_RenderTexturedTriangle(
+					v1, v2, v3,
 					transformed[i].texCrds[0],
 					transformed[i].texCrds[1],
 					transformed[i].texCrds[2], 
-					T_meshTexture);
+					T_meshTexture, lightPerc);
 			}
 
 			//rasterize
@@ -240,6 +244,21 @@ void G_RunRenderLoop()
 	}
 
 	SDLSystemShutdown();
+}
+
+float G_CalcFaceIllumination(Vec3_t face[3], Vec3_t lightDir)
+{
+	Vec3_t normal = M_NormalVec3(face[0], face[1], face[2]);
+
+	normal = M_NormalizeVec3(normal);
+
+	float lightPerc = vertDirCW * M_DotVec3(normal, light.direction);
+	if (lightPerc < 0.1f)
+		lightPerc = 0.1f;
+	if (lightPerc > 0.9f)
+		lightPerc = 0.9f;
+
+	return lightPerc;
 }
 
 uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor)
@@ -562,9 +581,9 @@ void G_RasterTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 }
 
 void G_RenderTexturedTriangle(
-	Vec2_t p1, Vec2_t p2, Vec2_t p3, 
+	Vec4_t p1, Vec4_t p2, Vec4_t p3,
 	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3, 
-	uint32_t* texture)
+	uint32_t* texture, float lightPrecFactor)
 {
 	M_SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
 
@@ -578,7 +597,6 @@ void G_RenderTexturedTriangle(
 	Vec2_t point_a = { x0, y0 };
 	Vec2_t point_b = { x1, y1 };
 	Vec2_t point_c = { x2, y2 };
-
 
 	//render top triangle
 	float inv_slope1 = 0;
@@ -604,7 +622,9 @@ void G_RenderTexturedTriangle(
 				G_DrawTexel(
 					x, y, texture,
 					point_a, point_b, point_c,
-					tp1, tp2, tp3
+					tp1, tp2, tp3,
+					p1.w, p2.w, p3.w,
+					lightPrecFactor
 				);
 			}
 		}
@@ -635,7 +655,9 @@ void G_RenderTexturedTriangle(
 				G_DrawTexel(
 					x, y, texture, 
 					point_a, point_b, point_c,
-					tp1, tp2, tp3
+					tp1, tp2, tp3,
+					p1.w, p2.w, p3.w,
+					lightPrecFactor
 				);
 			}
 		}
@@ -644,7 +666,9 @@ void G_RenderTexturedTriangle(
 
 void G_DrawTexel(int x, int y, uint32_t* texture,
 	Vec2_t a, Vec2_t b, Vec2_t c,
-	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c)
+	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c, 
+	float a_w, float b_w, float c_w,
+	float lightPercFactor)
 {
 	Vec2_t p = { x, y };
 	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
@@ -654,8 +678,12 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 	float gamma = bWeights.z;
 
 	//perform barycentric weights U V interpolation
-	float interp_u = uv_a.u * alpha + uv_b.u * beta + uv_c.u * gamma;
-	float interp_v = uv_a.v * alpha + uv_b.v * beta + uv_c.v * gamma;
+	float interp_u = (uv_a.u / a_w) * alpha + (uv_b.u / b_w) * beta + (uv_c.u / c_w) * gamma;
+	float interp_v = (uv_a.v / a_w) * alpha + (uv_b.v / b_w) * beta + (uv_c.v / c_w) * gamma;
+
+	float interpolated_reciprocal_w = (1.0f / a_w) * alpha + (1.0f / b_w) * beta + (1.0f / c_w) * gamma;
+	interp_u /= interpolated_reciprocal_w;
+	interp_v /= interpolated_reciprocal_w;
 
 	//get pixel offset within the texture
 	int tex_x = abs((int)(interp_u * T_texWidth));
@@ -664,5 +692,6 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 	if ((T_texWidth * tex_y) + tex_x > 64 * 64 * sizeof(uint8_t))
 		return;
 
-	G_DrawXYColor(x, y, texture[(T_texWidth * tex_y) + tex_x]);
+	uint32_t color = G_LightIntensity(texture[(T_texWidth * tex_y) + tex_x], lightPercFactor);
+	G_DrawXYColor(x, y, color);
 }

@@ -12,6 +12,11 @@ Vec3_t M_TranslateVec3(Vec3_t vector, Vec3_t pos)
 	return M_AddVec3(vector, pos);
 }
 
+Vec4_t M_TranslateVec4(Vec4_t vector, Vec4_t pos)
+{
+	return M_AddVec4(vector, pos); //M_AddVec3(vector, pos);
+}
+
 Vec3_t M_RotVectorX(Vec3_t vector, float angle)
 {
 	Vec3_t v;
@@ -117,6 +122,28 @@ void M_Vec2UVSwap(Vec2_t* p1, Vec2_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
 	p2uv->v = tmpTex.v;
 }
 
+void M_Vec4UVSwap(Vec4_t* p1, Vec4_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
+{
+	Vec4_t tmp = *p1;
+	Tex2_t tmpTex = *p1uv;
+
+	p1->x = p2->x;
+	p1->y = p2->y;
+	p1->z = p2->z;
+	p1->w = p2->w;
+
+	p1uv->u = p2uv->u;
+	p1uv->v = p2uv->v;
+
+	p2->x = tmp.x;
+	p2->y = tmp.y;
+	p2->z = tmp.z;
+	p2->w = tmp.w;
+
+	p2uv->u = tmpTex.u;
+	p2uv->v = tmpTex.v;
+}
+
 //sort triangle vertices by Y coordinate
 void M_SortTrianglePointsY(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3)
 {
@@ -142,17 +169,17 @@ void M_SortTexturedTrianglePointsY(
 {
 	if ((int)p1->y > (int)p2->y)
 	{
-		M_Vec2UVSwap(p1, p2, p1uv, p2uv);
+		M_Vec4UVSwap(p1, p2, p1uv, p2uv);
 	}
 
 	if ((int)p2->y > (int)p3->y)
 	{
-		M_Vec2UVSwap(p2, p3, p2uv, p3uv);
+		M_Vec4UVSwap(p2, p3, p2uv, p3uv);
 	}
 
 	if ((int)p1->y > (int)p2->y)
 	{
-		M_Vec2UVSwap(p1, p2, p1uv, p2uv);
+		M_Vec4UVSwap(p1, p2, p1uv, p2uv);
 	}
 }
 
