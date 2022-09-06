@@ -104,7 +104,10 @@ int SDLSystemShouldQuit()
 		if (event.key.keysym.sym == SDLK_4)
 			G_debugRenderTextured = !G_debugRenderTextured;
 
+		if (event.key.keysym.sym == SDLK_5)
+			G_debugRenderZBuffer = !G_debugRenderZBuffer;
 
+		
 		if (event.key.keysym.sym == SDLK_w)
 		{
 			worldPosition.pos.z += 1.0f * cosf(worldPosition.dirAngle);

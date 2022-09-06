@@ -11,6 +11,7 @@ int G_debugRasterize;
 int G_debugDrawVertices;
 int G_debugDrawWireframe;
 int G_debugRenderTextured;
+int G_debugRenderZBuffer;
 
 uint32_t _ScreenW, _ScreenH;
 uint32_t* screenBuffer;

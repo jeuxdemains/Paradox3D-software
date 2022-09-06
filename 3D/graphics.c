@@ -4,11 +4,12 @@ G_debugEnableBackfaceCulling = 1;
 G_debugInvertBackFaceCulling = 0; //1 = normal; -1 = inverted
 G_debugDrawWireframe = 1;
 G_debugRenderTextured = 1;
+G_debugRenderZBuffer = 0;
 
 Vec3_t camera = { 0, 0, 0 };
-Light_t light = { { 0.0f, 0.0f, 1.0f } };
+Light_t light = { { 0.0f, 0.0f, -1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
-float vertDirCW = -1.0f; //1 = CW; -1 = CCW
+float vertDirCW = 1.0f; //1 = CW; -1 = CCW
 float* zBuffer = NULL;
 
 Model_t modelData =
@@ -66,16 +67,16 @@ void G_RunRenderLoop()
 	T_texHeight = 64;
 
 	//init model
-	modelData.faces = modelCubeFaces; //&faces; // &carFaces;
-	modelData.vertices = modelCube; //&model; // &carModel;
-	modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
-	modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
+	//modelData.faces = modelCubeFaces; //&faces; // &carFaces;
+	//modelData.vertices = modelCube; //&model; // &carModel;
+	//modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
+	//modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
 
 	//init model
-	//modelData.faces = faces; // &carFaces;
-	//modelData.vertices = model; // &carModel;
-	//modelData.facesCnt = sizeof(faces) / sizeof(*faces);
-	//modelData.vecCnt = sizeof(model) / sizeof(*model);
+	modelData.faces = faces; // &carFaces;
+	modelData.vertices = model; // &carModel;
+	modelData.facesCnt = sizeof(faces) / sizeof(*faces);
+	modelData.vecCnt = sizeof(model) / sizeof(*model);
 
 
 	printf("Rendering %d vertices with %d faces\n",
@@ -95,7 +96,7 @@ void G_RunRenderLoop()
 		}
 
 		//zoom out the model
-		modelData.translation.z = 8.0f;
+		modelData.translation.z = 16.0f;
 
 		Mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
@@ -173,7 +174,8 @@ void G_RunRenderLoop()
 			transformedVtxCnt++;
 		}
 
-		G_SortFacesByZ(transformed, transformedVtxCnt);
+		//Not needed if Z-Buffer is implemented
+		//G_SortFacesByZ(transformed, transformedVtxCnt);
 
 		for (int i = 0; i < transformedVtxCnt; i++)
 		{
@@ -204,14 +206,31 @@ void G_RunRenderLoop()
 
 			//calc light intensity
 			float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
-
 			
 			//rasterize
-			if (G_debugRasterize)
+			if (G_debugRasterize && !G_debugRenderTextured)
 			{
-				uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
+				/*uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
 				G_SetDrawColor(color);
-				G_RasterTriangle(v2d1, v2d2, v2d3);
+				G_RasterTriangle(v2d1, v2d2, v2d3);*/
+				Vec4_t v1 = M_Vec4FromVec2(v2d1);
+				Vec4_t v2 = M_Vec4FromVec2(v2d2);
+				Vec4_t v3 = M_Vec4FromVec2(v2d3);
+
+				v1.z = v4d1.z;
+				v1.w = v4d1.w;
+				v2.z = v4d2.z;
+				v2.w = v4d2.w;
+				v3.z = v4d3.z;
+				v3.w = v4d3.w;
+
+				G_RenderTexturedTriangle(
+					v1, v2, v3,
+					transformed[i].texCrds[0],
+					transformed[i].texCrds[1],
+					transformed[i].texCrds[2],
+					0, lightPerc,
+					1, 0xFFFF00FF);
 			}
 
 			//texture map
@@ -233,7 +252,8 @@ void G_RunRenderLoop()
 					transformed[i].texCrds[0],
 					transformed[i].texCrds[1],
 					transformed[i].texCrds[2],
-					T_meshTexture, lightPerc);
+					T_meshTexture, lightPerc,
+					0,0);
 			}
 			
 			//wireframe
@@ -256,7 +276,10 @@ void G_RunRenderLoop()
 				G_DrawVertex(v2d3, 2);
 			}
 		}
-		
+
+		if (G_debugRenderZBuffer)
+			RenderZBuffer();
+
 		SDLSystemRender();
 		G_ClearBuffer();
 		G_ClearZBuffer();
@@ -267,6 +290,24 @@ void G_RunRenderLoop()
 
 	free(zBuffer);
 	SDLSystemShutdown();
+}
+
+void RenderZBuffer()
+{
+	for (int y = 0; y < _ScreenH; y++)
+	{
+		for (int x = 0; x < _ScreenW; x++)
+		{
+			float zBuff = zBuffer[(_ScreenW * y) + x];
+			uint32_t r = (0xFFFFFFFF & 0xFF000000) * -zBuff * 20;
+			uint32_t g = (0xFFFFFFFF & 0x00FF0000) * -zBuff * 20;
+			uint32_t b = (0xFFFFFFFF & 0x0000FF00) * -zBuff * 20;
+			uint32_t a = (0xFFFFFFFF & 0x000000FF);
+			uint32_t clr = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | a;
+
+			screenBuffer[(_ScreenW * y) + x] = clr;
+		}
+	}
 }
 
 float G_CalcFaceIllumination(Vec3_t face[3], Vec3_t lightDir)
@@ -606,9 +647,15 @@ void G_RasterTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 void G_RenderTexturedTriangle(
 	Vec4_t p1, Vec4_t p2, Vec4_t p3,
 	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3, 
-	uint32_t* texture, float lightPrecFactor)
+	uint32_t* texture, float lightPrecFactor,
+	int isSolidColor, uint32_t color)
 {
 	M_Vec4SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
+
+	// Flip the V component to account for inverted UV-coordinates (V grows downwards)
+	tp1.v = 1.0 - tp1.v;
+	tp2.v = 1.0 - tp2.v;
+	tp3.v = 1.0 - tp3.v;
 
 	int x0 = (int)p1.x;
 	int y0 = (int)p1.y;
@@ -638,12 +685,24 @@ void G_RenderTexturedTriangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				G_DrawTexel(
-					x, y, texture,
-					p1, p2, p3,
-					tp1, tp2, tp3,
-					lightPrecFactor
-				);
+				if (isSolidColor)
+				{
+					G_DrawPixel(
+						x, y, color,
+						p1, p2, p3,
+						tp1, tp2, tp3,
+						lightPrecFactor
+					);
+				}
+				else
+				{
+					G_DrawTexel(
+						x, y, texture,
+						p1, p2, p3,
+						tp1, tp2, tp3,
+						lightPrecFactor
+					);
+				}
 			}
 		}
 	}
@@ -669,13 +728,24 @@ void G_RenderTexturedTriangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				//G_DrawXYColor(x, y, 0xFFAA00FF);
-				G_DrawTexel(
-					x, y, texture, 
-					p1, p2, p3,
-					tp1, tp2, tp3,
-					lightPrecFactor
-				);
+				if (isSolidColor)
+				{
+					G_DrawPixel(
+						x, y, color,
+						p1, p2, p3,
+						tp1, tp2, tp3,
+						lightPrecFactor
+					);
+				}
+				else
+				{
+					G_DrawTexel(
+						x, y, texture,
+						p1, p2, p3,
+						tp1, tp2, tp3,
+						lightPrecFactor
+					);
+				}
 			}
 		}
 	}
@@ -711,9 +781,55 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 
 	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 
-	if (interpolated_reciprocal_w < zBuffer[(T_texWidth * y) + x])
+	if (y < 0 || y >= _ScreenH || x < 0 || x >= _ScreenW)
+		return;
+
+	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
 	{
 		uint32_t color = G_LightIntensity(texture[(T_texWidth * tex_y) + tex_x], lightPercFactor);
+		G_DrawXYColor(x, y, color);
+
+		//update the Z-Buffer
+		zBuffer[(_ScreenW * y) + x] = interpolated_reciprocal_w;
+	}
+}
+
+void G_DrawPixel(int x, int y, uint32_t color,
+	Vec4_t point_a, Vec4_t point_b, Vec4_t point_c,
+	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c,
+	float lightPercFactor)
+{
+	Vec2_t p = { x, y };
+	Vec2_t a = M_Vec2FromVec4(point_a);
+	Vec2_t b = M_Vec2FromVec4(point_b);
+	Vec2_t c = M_Vec2FromVec4(point_c);
+
+	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
+
+	float alpha = bWeights.x;
+	float beta = bWeights.y;
+	float gamma = bWeights.z;
+
+	//perform barycentric weights U V interpolation
+	float interp_u = (uv_a.u / point_a.w) * alpha + (uv_b.u / point_b.w) * beta + (uv_c.u / point_c.w) * gamma;
+	float interp_v = (uv_a.v / point_a.w) * alpha + (uv_b.v / point_b.w) * beta + (uv_c.v / point_c.w) * gamma;
+
+	float interpolated_reciprocal_w = (1.0f / point_a.w) * alpha + (1.0f / point_b.w) * beta + (1.0f / point_c.w) * gamma;
+	interp_u /= interpolated_reciprocal_w;
+	interp_v /= interpolated_reciprocal_w;
+
+	//get pixel offset within the texture
+	int tex_x = abs((int)(interp_u * T_texWidth)) % T_texWidth;
+	int tex_y = abs((int)(interp_v * T_texHeight)) % T_texHeight;
+
+	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
+
+	if (y < 0 || y >= _ScreenH || x < 0 || x >= _ScreenW)
+		return;
+
+	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
+	{
+		color = G_LightIntensity(color, lightPercFactor);
 		G_DrawXYColor(x, y, color);
 
 		//update the Z-Buffer
