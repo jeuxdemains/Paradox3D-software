@@ -32,8 +32,8 @@ typedef struct
 /// VECTOR 2
 Vec2_t M_Vec2Add(Vec2_t v1, Vec2_t v2);
 Vec2_t M_Vec2Sub(Vec2_t vec1, Vec2_t vec2);
-Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor);
-Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y);
+void M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor);
+void M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y);
 //conversions
 Vec2_t M_Vec2FromVec3(Vec3_t v);
 Vec2_t M_Vec2FromVec4(Vec4_t v);

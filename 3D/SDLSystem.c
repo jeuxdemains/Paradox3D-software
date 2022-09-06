@@ -18,7 +18,7 @@ void SDLSystemShutdown()
 	SDL_DestroyWindow(sdlSystemWindow);
 	SDL_Quit();
 
-	free(*screenBuffer);
+	free(screenBuffer);
 }
 
 void SDLSystemInitScreenBuffer(uint32_t w, uint32_t h)

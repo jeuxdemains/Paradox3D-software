@@ -23,12 +23,11 @@ extern Position_t worldPosition;
 
 void G_RunRenderLoop();
 void G_DrawPoint(Vec2_t v);
-void G_DrawPointI(int x, int y);
+void G_DrawPointI(uint32_t x, uint32_t y);
 void G_DrawPointColor(Vec2_t v, uint32_t color);
 void G_DrawTexel(int x, int y, uint32_t* texture,
-	Vec2_t a, Vec2_t b, Vec2_t c,
+	Vec4_t a, Vec4_t b, Vec4_t c,
 	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c,
-	float a_w, float b_w, float c_w,
 	float lightPercFactor);
 void G_DrawLine(Vec2_t p1, Vec2_t p2);
 void G_DrawLineI(Vec2i_t p1, Vec2i_t p2);
@@ -48,3 +47,5 @@ void G_DrawVertex(Vec2_t v, uint32_t size);
 void G_ClipFaceZ(Vec3_t* v1, Vec3_t* v2, Vec3_t* v3);
 uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor);
 float G_CalcFaceIllumination(Vec3_t face[3], Vec3_t lightDir);
+void G_InitZBuffer(int w, int h);
+void G_ClearZBuffer();

@@ -9,6 +9,7 @@ Vec3_t camera = { 0, 0, 0 };
 Light_t light = { { 0.0f, 0.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
 float vertDirCW = -1.0f; //1 = CW; -1 = CCW
+float* zBuffer = NULL;
 
 Model_t modelData =
 {
@@ -25,11 +26,32 @@ Model_t modelData =
 Mat4_t projMat;
 TransformedModelFace_t transformed[1804];
 
+void G_InitZBuffer(int w, int h)
+{
+	zBuffer = (float*)malloc(sizeof(float) * w * h);
+	G_ClearZBuffer();
+}
+
+void G_ClearZBuffer()
+{
+	for (uint32_t y = 0; y < _ScreenH; y++)
+	{
+		for (uint32_t x = 0; x < _ScreenW; x++)
+		{
+			zBuffer[(_ScreenW * y) + x] = 1.0f;
+		}
+	}
+}
+
 void G_RunRenderLoop()
 {
 	SDLSystemInit();
-	SDL_Window* window = SDLSystemCreateWindow(800, 600);
+	_ScreenW = 800;
+	_ScreenH = 600;
+	SDL_Window* window = SDLSystemCreateWindow(_ScreenW, _ScreenH);
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
+
+	G_InitZBuffer(_ScreenW, _ScreenH);
 
 	//init aspect, fov, projection matrix
 	float fov = 3.14159f / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
@@ -73,7 +95,7 @@ void G_RunRenderLoop()
 		}
 
 		//zoom out the model
-		modelData.translation.z = 6.0f;
+		modelData.translation.z = 8.0f;
 
 		Mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
@@ -127,9 +149,7 @@ void G_RunRenderLoop()
 			if (G_debugEnableBackfaceCulling == 1)
 			{
 				if (M_IsFrontFace(
-					faceVertecies[0],
-					faceVertecies[1],
-					faceVertecies[2],
+					faceVertecies[0], faceVertecies[1], faceVertecies[2],
 					camera) == G_debugInvertBackFaceCulling)
 				{
 					continue;
@@ -185,6 +205,15 @@ void G_RunRenderLoop()
 			//calc light intensity
 			float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 
+			
+			//rasterize
+			if (G_debugRasterize)
+			{
+				uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
+				G_SetDrawColor(color);
+				G_RasterTriangle(v2d1, v2d2, v2d3);
+			}
+
 			//texture map
 			if (G_debugRenderTextured)
 			{
@@ -203,16 +232,8 @@ void G_RunRenderLoop()
 					v1, v2, v3,
 					transformed[i].texCrds[0],
 					transformed[i].texCrds[1],
-					transformed[i].texCrds[2], 
+					transformed[i].texCrds[2],
 					T_meshTexture, lightPerc);
-			}
-
-			//rasterize
-			if (G_debugRasterize)
-			{
-				uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
-				G_SetDrawColor(color);
-				G_RasterTriangle(v2d1, v2d2, v2d3);
 			}
 			
 			//wireframe
@@ -238,11 +259,13 @@ void G_RunRenderLoop()
 		
 		SDLSystemRender();
 		G_ClearBuffer();
+		G_ClearZBuffer();
 
 		deltaTime = SDL_GetTicks() - deltaTime;
 		G_CapFrameRate(deltaTime);
 	}
 
+	free(zBuffer);
 	SDLSystemShutdown();
 }
 
@@ -381,7 +404,7 @@ void G_DrawPoint(Vec2_t v)
 	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = drawColor;
 }
 
-void G_DrawPointI(int x, int y)
+void G_DrawPointI(uint32_t x, uint32_t y)
 {
 	if (x < 0 || x >= _ScreenW || y < 0 || y >= _ScreenH)
 		return;
@@ -403,7 +426,7 @@ void G_DrawPointColor(Vec2_t v, uint32_t color)
 	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = color;
 }
 
-void G_DrawXYColor(int x, int y, uint32_t color)
+void G_DrawXYColor(uint32_t x, uint32_t y, uint32_t color)
 {
 	if (x < 0 || y > _ScreenW || x < 0 || y > _ScreenH)
 		return;
@@ -585,7 +608,7 @@ void G_RenderTexturedTriangle(
 	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3, 
 	uint32_t* texture, float lightPrecFactor)
 {
-	M_SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
+	M_Vec4SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
 
 	int x0 = (int)p1.x;
 	int y0 = (int)p1.y;
@@ -593,10 +616,6 @@ void G_RenderTexturedTriangle(
 	int y1 = (int)p2.y;
 	int x2 = (int)p3.x;
 	int y2 = (int)p3.y;
-
-	Vec2_t point_a = { x0, y0 };
-	Vec2_t point_b = { x1, y1 };
-	Vec2_t point_c = { x2, y2 };
 
 	//render top triangle
 	float inv_slope1 = 0;
@@ -621,9 +640,8 @@ void G_RenderTexturedTriangle(
 			{
 				G_DrawTexel(
 					x, y, texture,
-					point_a, point_b, point_c,
+					p1, p2, p3,
 					tp1, tp2, tp3,
-					p1.w, p2.w, p3.w,
 					lightPrecFactor
 				);
 			}
@@ -654,9 +672,8 @@ void G_RenderTexturedTriangle(
 				//G_DrawXYColor(x, y, 0xFFAA00FF);
 				G_DrawTexel(
 					x, y, texture, 
-					point_a, point_b, point_c,
+					p1, p2, p3,
 					tp1, tp2, tp3,
-					p1.w, p2.w, p3.w,
 					lightPrecFactor
 				);
 			}
@@ -665,12 +682,15 @@ void G_RenderTexturedTriangle(
 }
 
 void G_DrawTexel(int x, int y, uint32_t* texture,
-	Vec2_t a, Vec2_t b, Vec2_t c,
+	Vec4_t point_a, Vec4_t point_b, Vec4_t point_c,
 	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c, 
-	float a_w, float b_w, float c_w,
 	float lightPercFactor)
 {
 	Vec2_t p = { x, y };
+	Vec2_t a = M_Vec2FromVec4(point_a);
+	Vec2_t b = M_Vec2FromVec4(point_b);
+	Vec2_t c = M_Vec2FromVec4(point_c);
+
 	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
 
 	float alpha = bWeights.x;
@@ -678,20 +698,25 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 	float gamma = bWeights.z;
 
 	//perform barycentric weights U V interpolation
-	float interp_u = (uv_a.u / a_w) * alpha + (uv_b.u / b_w) * beta + (uv_c.u / c_w) * gamma;
-	float interp_v = (uv_a.v / a_w) * alpha + (uv_b.v / b_w) * beta + (uv_c.v / c_w) * gamma;
+	float interp_u = (uv_a.u / point_a.w) * alpha + (uv_b.u / point_b.w) * beta + (uv_c.u / point_c.w) * gamma;
+	float interp_v = (uv_a.v / point_a.w) * alpha + (uv_b.v / point_b.w) * beta + (uv_c.v / point_c.w) * gamma;
 
-	float interpolated_reciprocal_w = (1.0f / a_w) * alpha + (1.0f / b_w) * beta + (1.0f / c_w) * gamma;
+	float interpolated_reciprocal_w = (1.0f / point_a.w) * alpha + (1.0f / point_b.w) * beta + (1.0f / point_c.w) * gamma;
 	interp_u /= interpolated_reciprocal_w;
 	interp_v /= interpolated_reciprocal_w;
 
 	//get pixel offset within the texture
-	int tex_x = abs((int)(interp_u * T_texWidth));
-	int tex_y = abs((int)(interp_v * T_texHeight));
+	int tex_x = abs((int)(interp_u * T_texWidth)) % T_texWidth;
+	int tex_y = abs((int)(interp_v * T_texHeight)) % T_texHeight;
 
-	if ((T_texWidth * tex_y) + tex_x > 64 * 64 * sizeof(uint8_t))
-		return;
+	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 
-	uint32_t color = G_LightIntensity(texture[(T_texWidth * tex_y) + tex_x], lightPercFactor);
-	G_DrawXYColor(x, y, color);
+	if (interpolated_reciprocal_w < zBuffer[(T_texWidth * y) + x])
+	{
+		uint32_t color = G_LightIntensity(texture[(T_texWidth * tex_y) + tex_x], lightPercFactor);
+		G_DrawXYColor(x, y, color);
+
+		//update the Z-Buffer
+		zBuffer[(_ScreenW * y) + x] = interpolated_reciprocal_w;
+	}
 }

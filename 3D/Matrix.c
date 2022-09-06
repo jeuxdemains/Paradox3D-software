@@ -4,10 +4,10 @@ Mat4_t Mat4_MakeIdentity(void)
 {
 	Mat4_t mat = 
 	{ {
-		{1.0f, 0, 0 ,0},
-		{0, 1.0f, 0 ,0},
-		{0,0,1.0f, 0},
-		{0,0,0,1.0f}
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1}
 	} };
 
 	return mat;
@@ -15,12 +15,17 @@ Mat4_t Mat4_MakeIdentity(void)
 
 Mat4_t Mat4_MakePerspective(float aspect, float fov, float zNear, float zFar)
 {
+	// | (h/w)*1/tan(fov/2)             0              0                 0 |
+	// |                  0  1/tan(fov/2)              0                 0 |
+	// |                  0             0     zf/(zf-zn)  (-zf*zn)/(zf-zn) |
+	// |                  0             0              1                 0 |
+
 	Mat4_t m = { {{0}} };
 
 	m.m[0][0] = aspect * (1 / tanf(fov / 2.0f));		//aspect * half FOV
 	m.m[1][1] = 1 / tanf(fov / 2.0f);				//half FOV
 	m.m[2][2] = zFar / (zFar - zNear);					//normalized frustum Z len
-	m.m[3][3] = (-zFar * zNear) / (zFar * zNear);		//offset the Z projection plane
+	m.m[2][3] = (-zFar * zNear) / (zFar - zNear);		//offset the Z projection plane
 	m.m[3][2] = 1.0f;									//save the original Z value
 														//when mul with Vec3 in the W component
 

@@ -22,7 +22,7 @@ Vec2_t M_Vec2Sub(Vec2_t vec1, Vec2_t vec2)
 	return vec;
 }
 
-Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
+void M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
 {
 	p1->x *= scaleFactor;
 	p1->y *= scaleFactor;
@@ -32,7 +32,7 @@ Vec2_t M_Vec2ScaleFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float scaleFactor)
 	p3->y *= scaleFactor;
 }
 
-Vec2_t M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y)
+void M_Vec2TranslateFace(Vec2_t* p1, Vec2_t* p2, Vec2_t* p3, float x, float y)
 {
 	p1->x += x;
 	p1->y += y;
@@ -152,7 +152,7 @@ Vec4_t M_Vec4FromVec3(Vec3_t vec)
 
 Vec4_t M_Vec4FromVec2(Vec2_t vec)
 {
-	Vec4_t v = { .x = vec.x, .y = vec.y, .z = 0, .w = 0 };
+	Vec4_t v = { .x = vec.x, .y = vec.y, .z = 0.0f, .w = 1.0f };
 	return v;
 }
 
