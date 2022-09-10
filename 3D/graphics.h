@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Matrix.h"
 #include "camera.h"
+#include "clipping.h"
 
 #define FPS_TARGET 60
 
@@ -21,7 +22,12 @@ extern int G_debugDrawWireframe;
 extern int G_debugRenderTextured;
 extern int G_debugRenderZBuffer;
 
-extern Position_t worldPosition;
+typedef struct
+{
+	vec3_t pos;
+	float dirAngle;
+} Position_t;
+
 
 void G_RunRenderLoop();
 void G_DrawPoint(vec2_t v);
@@ -29,11 +35,11 @@ void G_DrawPointI(uint32_t x, uint32_t y);
 void G_DrawPointColor(vec2_t v, uint32_t color);
 void G_DrawTexel(int x, int y, uint32_t* texture,
 	vec4_t a, vec4_t b, vec4_t c,
-	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c,
+	tex2_t uv_a, tex2_t uv_b, tex2_t uv_c,
 	float lightPercFactor);
 void G_DrawPixel(int x, int y, uint32_t color,
 	vec4_t point_a, vec4_t point_b, vec4_t point_c,
-	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c,
+	tex2_t uv_a, tex2_t uv_b, tex2_t uv_c,
 	float lightPercFactor);
 
 void G_DrawLine(vec2_t p1, vec2_t p2);
@@ -42,7 +48,7 @@ void G_DrawLineI(vec2i_t p1, vec2i_t p2);
 void G_RasterTriangle(vec2_t p1, vec2_t p2, vec2_t p3);
 void G_RenderTexturedTriangle(
 	vec4_t p1, vec4_t p2, vec4_t p3,
-	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3,
+	tex2_t tp1, tex2_t tp2, tex2_t tp3,
 	uint32_t* texture, float lightPrecFactor, int isSolidColor, uint32_t color);
 
 void G_ClearBuffer();

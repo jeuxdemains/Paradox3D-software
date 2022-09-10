@@ -151,6 +151,18 @@ vec3_t M_MaxZVec3(vec3_t p1, vec3_t p2, vec3_t p3)
 	return p;
 }
 
+vec3_t M_Vec3Clone(vec3_t* vertex)
+{
+	vec3_t v =
+	{
+		.x = vertex->x,
+		.y = vertex->y,
+		.z = vertex->z
+	};
+
+	return v;
+}
+
 ///
 /// VECTOR 4
 ///

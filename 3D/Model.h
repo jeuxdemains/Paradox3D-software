@@ -15,9 +15,9 @@ typedef struct
 	int a;
 	int b;
 	int c;
-	Tex2_t a_uv;
-	Tex2_t b_uv;
-	Tex2_t c_uv;
+	tex2_t a_uv;
+	tex2_t b_uv;
+	tex2_t c_uv;
 	//uint32_t color;
 } FaceTex_t;
 
@@ -37,7 +37,7 @@ typedef struct
 typedef struct
 {
 	vec3_t vertices[3];
-	Tex2_t texCrds[3];
+	tex2_t texCrds[3];
 	float depth;
 } TransformedModelFace_t;
 

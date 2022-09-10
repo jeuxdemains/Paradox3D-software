@@ -1,11 +1,5 @@
 #include "SDLSystem.h"
 
-Position_t worldPosition =
-{ 
-	.pos = {0,0,0}
-};
-
-
 void SDLSystemInit()
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -105,34 +99,34 @@ void HandleCamera(SDL_Event event, float deltaTime)
 {
 	if (event.key.keysym.sym == SDLK_e)
 	{
-		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 5.0f * deltaTime);
+		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_AddVec3(camera.position, camera.forwardVelocity);
 	}
 
 	if (event.key.keysym.sym == SDLK_c)
 	{
-		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 5.0f * deltaTime);
+		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_SubVec3(camera.position, camera.forwardVelocity);
 	}
 
 	if (event.key.keysym.sym == SDLK_w)
 	{
-		camera.position.y -= 3.0f * deltaTime;
+		camera.position.y -= 16.0f * deltaTime;
 	}
 
 	if (event.key.keysym.sym == SDLK_s)
 	{
-		camera.position.y += 3.0f * deltaTime;
+		camera.position.y += 16.0f * deltaTime;
 	}
 
 	if (event.key.keysym.sym == SDLK_a)
 	{
-		camera.yawAngle -= 1.0f * deltaTime;
+		camera.yawAngle -= 3.0f * deltaTime;
 	}
 
 	if (event.key.keysym.sym == SDLK_d)
 	{
-		camera.yawAngle += 1.0f * deltaTime;
+		camera.yawAngle += 3.0f * deltaTime;
 	}
 }
 

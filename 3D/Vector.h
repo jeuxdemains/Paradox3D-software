@@ -50,6 +50,7 @@ float M_DotVec3(vec3_t p1, vec3_t p2);
 vec3_t M_CrossVec3(vec3_t p1, vec3_t p2);
 vec3_t M_NormalVec3(vec3_t p1, vec3_t p2, vec3_t p3);
 vec3_t M_MaxZVec3(vec3_t p1, vec3_t p2, vec3_t p3);
+vec3_t M_Vec3Clone(vec3_t* vertex);
 //conversions
 vec3_t M_Vec3FromVec4(vec4_t vec);
 

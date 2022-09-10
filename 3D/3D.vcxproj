@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.c" />
+    <ClCompile Include="clipping.c" />
     <ClCompile Include="graphics.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Math3D.c" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="clipping.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="Math3D.h" />
     <ClInclude Include="Matrix.h" />

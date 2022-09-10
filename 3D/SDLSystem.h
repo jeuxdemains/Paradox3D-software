@@ -20,11 +20,7 @@ SDL_Renderer* sdlSystemRenderer;
 SDL_Window* sdlSystemWindow;
 SDL_Texture* screenTexture;
 
-typedef struct
-{
-	vec3_t pos;
-	float dirAngle;
-} Position_t;
+
 
 
 void SDLSystemInit();

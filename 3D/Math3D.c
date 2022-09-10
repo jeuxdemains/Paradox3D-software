@@ -106,10 +106,10 @@ void M_Vec2Swap(vec2_t* p1, vec2_t* p2)
 	p2->y = tmp.y;
 }
 
-void M_Vec2UVSwap(vec2_t* p1, vec2_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
+void M_Vec2UVSwap(vec2_t* p1, vec2_t* p2, tex2_t* p1uv, tex2_t* p2uv)
 {
 	vec2_t tmp = *p1;
-	Tex2_t tmpTex = *p1uv;
+	tex2_t tmpTex = *p1uv;
 
 	p1->x = p2->x;
 	p1->y = p2->y;
@@ -122,10 +122,10 @@ void M_Vec2UVSwap(vec2_t* p1, vec2_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
 	p2uv->v = tmpTex.v;
 }
 
-void M_Vec4UVSwap(vec4_t* p1, vec4_t* p2, Tex2_t* p1uv, Tex2_t* p2uv)
+void M_Vec4UVSwap(vec4_t* p1, vec4_t* p2, tex2_t* p1uv, tex2_t* p2uv)
 {
 	vec4_t tmp = *p1;
-	Tex2_t tmpTex = *p1uv;
+	tex2_t tmpTex = *p1uv;
 
 	p1->x = p2->x;
 	p1->y = p2->y;
@@ -165,7 +165,7 @@ void M_SortTrianglePointsY(vec2_t* p1, vec2_t* p2, vec2_t* p3)
 
 void M_SortTexturedTrianglePointsY(
 	vec2_t* p1, vec2_t* p2, vec2_t* p3, 
-	Tex2_t* p1uv, Tex2_t* p2uv, Tex2_t* p3uv)
+	tex2_t* p1uv, tex2_t* p2uv, tex2_t* p3uv)
 {
 	if ((int)p1->y > (int)p2->y)
 	{
@@ -185,7 +185,7 @@ void M_SortTexturedTrianglePointsY(
 
 void M_Vec4SortTexturedTrianglePointsY(
 	vec4_t* p1, vec4_t* p2, vec4_t* p3,
-	Tex2_t* p1uv, Tex2_t* p2uv, Tex2_t* p3uv)
+	tex2_t* p1uv, tex2_t* p2uv, tex2_t* p3uv)
 {
 	if ((int)p1->y > (int)p2->y)
 	{
