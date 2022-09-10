@@ -7,7 +7,7 @@
 
 typedef struct
 {
-	Vec3_t face[3];
+	vec3_t face[3];
 } Face_t;
 
 typedef struct
@@ -23,11 +23,11 @@ typedef struct
 
 typedef struct
 {
-	Vec3_t modelPosition;
-	Vec3_t* vertices;
-	Vec3_t rotation;
-	Vec3_t translation;
-	Vec3_t scale;
+	vec3_t modelPosition;
+	vec3_t* vertices;
+	vec3_t rotation;
+	vec3_t translation;
+	vec3_t scale;
 
 	FaceTex_t* faces;
 	uint32_t vecCnt;
@@ -36,7 +36,7 @@ typedef struct
 
 typedef struct
 {
-	Vec3_t vertices[3];
+	vec3_t vertices[3];
 	Tex2_t texCrds[3];
 	float depth;
 } TransformedModelFace_t;
@@ -56,7 +56,7 @@ typedef struct
 //	{0.5, 0.5, 0.5},		//8
 //};
 
-static Vec3_t modelCube[8] =
+static vec3_t modelCube[8] =
 {
 	{.x = -1.0f, .y = -1.0f, .z = -1.0f },	// 1
 	{.x = -1.0f, .y = 1.0f, .z = -1.0f },	// 2
@@ -120,7 +120,7 @@ static FaceTex_t modelCubeFaces[12] =
 //};
 
 
-static Vec3_t model[994] =
+static vec3_t model[994] =
 {
 	{0.264484f, -0.234508f, -5.028813f},
 	{0.247230f, -0.392767f, -4.824187f},

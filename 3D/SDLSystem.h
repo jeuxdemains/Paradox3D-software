@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include "Vector.h"
+#include "camera.h"
 
 int G_debugEnableBackfaceCulling;
 int G_debugInvertBackFaceCulling;
@@ -21,7 +22,7 @@ SDL_Texture* screenTexture;
 
 typedef struct
 {
-	Vec3_t pos;
+	vec3_t pos;
 	float dirAngle;
 } Position_t;
 
@@ -32,6 +33,6 @@ void SDLSystemShutdown();
 SDL_Window* SDLSystemCreateWindow(uint32_t w, uint32_t h);
 SDL_Renderer* SDLSystemCreateRenderer(SDL_Window* sdlWindow);
 void SDLSystemRender();
-int SDLSystemShouldQuit();
+int SDLHandleEvents(float deltaTime);
 
 void DebugMessage(char* string);

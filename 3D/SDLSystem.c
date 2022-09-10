@@ -59,7 +59,84 @@ SDL_Renderer* SDLSystemCreateRenderer(SDL_Window* sdlWindow)
 	return sdlSystemRenderer;
 }
 
-int SDLSystemShouldQuit()
+void HandleDebug(SDL_Event event)
+{
+	if (event.key.keysym.sym == SDLK_b)
+	{
+		G_debugEnableBackfaceCulling = !G_debugEnableBackfaceCulling;
+
+		if (G_debugEnableBackfaceCulling == 0)
+			DebugMessage("Back-face culling disabled");
+		else
+			DebugMessage("Back-face culling enabled");
+	}
+
+	if (event.key.keysym.sym == SDLK_r)
+	{
+		G_debugInvertBackFaceCulling = !G_debugInvertBackFaceCulling;
+
+		if (G_debugInvertBackFaceCulling == 0)
+			DebugMessage("Back-face culling set to CCW");
+		else
+			DebugMessage("Back-face culling set to CW");
+	}
+
+	if (event.key.keysym.sym == SDLK_SPACE)
+		G_debugStopRotation = !G_debugStopRotation;
+
+	if (event.key.keysym.sym == SDLK_1)
+		G_debugRasterize = !G_debugRasterize;
+
+	if (event.key.keysym.sym == SDLK_2)
+		G_debugDrawVertices = !G_debugDrawVertices;
+
+	if (event.key.keysym.sym == SDLK_3)
+		G_debugDrawWireframe = !G_debugDrawWireframe;
+
+	if (event.key.keysym.sym == SDLK_4)
+		G_debugRenderTextured = !G_debugRenderTextured;
+
+	if (event.key.keysym.sym == SDLK_5)
+		G_debugRenderZBuffer = !G_debugRenderZBuffer;
+}
+
+
+void HandleCamera(SDL_Event event, float deltaTime)
+{
+	if (event.key.keysym.sym == SDLK_e)
+	{
+		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 5.0f * deltaTime);
+		camera.position = M_AddVec3(camera.position, camera.forwardVelocity);
+	}
+
+	if (event.key.keysym.sym == SDLK_c)
+	{
+		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 5.0f * deltaTime);
+		camera.position = M_SubVec3(camera.position, camera.forwardVelocity);
+	}
+
+	if (event.key.keysym.sym == SDLK_w)
+	{
+		camera.position.y -= 3.0f * deltaTime;
+	}
+
+	if (event.key.keysym.sym == SDLK_s)
+	{
+		camera.position.y += 3.0f * deltaTime;
+	}
+
+	if (event.key.keysym.sym == SDLK_a)
+	{
+		camera.yawAngle -= 1.0f * deltaTime;
+	}
+
+	if (event.key.keysym.sym == SDLK_d)
+	{
+		camera.yawAngle += 1.0f * deltaTime;
+	}
+}
+
+int SDLHandleEvents(float deltaTime)
 {
 	SDL_Event event;
 	SDL_PollEvent(&event);
@@ -69,70 +146,14 @@ int SDLSystemShouldQuit()
 
 	if (event.type == SDL_KEYDOWN)
 	{
-		if (event.key.keysym.sym == SDLK_b)
-		{
-			G_debugEnableBackfaceCulling = !G_debugEnableBackfaceCulling;
-
-			if (G_debugEnableBackfaceCulling == 0) 
-				DebugMessage("Back-face culling disabled");
-			else 
-				DebugMessage("Back-face culling enabled");
-		}
-
-		if (event.key.keysym.sym == SDLK_r)
-		{
-			G_debugInvertBackFaceCulling = !G_debugInvertBackFaceCulling;
-
-			if (G_debugInvertBackFaceCulling == 0) 
-				DebugMessage("Back-face culling set to CCW");
-			else 
-				DebugMessage("Back-face culling set to CW");
-		}
-
-		if (event.key.keysym.sym == SDLK_SPACE)
-			G_debugStopRotation = !G_debugStopRotation;
-
-		if (event.key.keysym.sym == SDLK_1)
-			G_debugRasterize = !G_debugRasterize;
-
-		if (event.key.keysym.sym == SDLK_2)
-			G_debugDrawVertices = !G_debugDrawVertices;
-
-		if (event.key.keysym.sym == SDLK_3)
-			G_debugDrawWireframe = !G_debugDrawWireframe;
-
-		if (event.key.keysym.sym == SDLK_4)
-			G_debugRenderTextured = !G_debugRenderTextured;
-
-		if (event.key.keysym.sym == SDLK_5)
-			G_debugRenderZBuffer = !G_debugRenderZBuffer;
-
-		
-		if (event.key.keysym.sym == SDLK_w)
-		{
-			worldPosition.pos.z += 1.0f * cosf(worldPosition.dirAngle);
-		}
-
-		if (event.key.keysym.sym == SDLK_s)
-		{
-			worldPosition.pos.z -= 1.0f * cosf(worldPosition.dirAngle);
-		}
-
-		if (event.key.keysym.sym == SDLK_a)
-		{
-			worldPosition.dirAngle += 1.0f;
-			worldPosition.pos.x += 1.0f * cosf(worldPosition.dirAngle);
-		}
-
-		if (event.key.keysym.sym == SDLK_d)
-		{
-			worldPosition.dirAngle -= 1.0f;
-			worldPosition.pos.x -= 1.0f * cosf(worldPosition.dirAngle);
-		}
+		HandleDebug(event);
+		HandleCamera(event, deltaTime);
 	}
 
 	return 0;
 }
+
+
 
 void SDLSystemRender()
 {

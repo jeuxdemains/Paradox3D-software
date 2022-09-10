@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera.c" />
     <ClCompile Include="graphics.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Math3D.c" />
@@ -151,6 +152,7 @@
     <ClCompile Include="Vector.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="Math3D.h" />
     <ClInclude Include="Matrix.h" />

@@ -6,7 +6,7 @@ G_debugDrawWireframe = 1;
 G_debugRenderTextured = 1;
 G_debugRenderZBuffer = 0;
 
-Vec3_t camera = { 0, 0, 0 };
+//vec3_t camera = { 0, 0, 0 };
 Light_t light = { { 0.0f, 0.0f, -1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
 float vertDirCW = 1.0f; //1 = CW; -1 = CCW
@@ -24,7 +24,7 @@ Model_t modelData =
 	.scale = {1.0f, 1.0f, 1.0f}
 };
 
-Mat4_t projMat;
+mat4_t projMat;
 TransformedModelFace_t transformed[1804];
 
 void G_InitZBuffer(int w, int h)
@@ -82,39 +82,56 @@ void G_RunRenderLoop()
 	printf("Rendering %d vertices with %d faces\n",
 		modelData.vecCnt, modelData.facesCnt);
 
-	uint32_t deltaTime;
+	float deltaTime = 0;
+	uint32_t prevFrameTime = 0;
 
-	while (SDLSystemShouldQuit() == 0)
+	while (SDLHandleEvents(deltaTime) == 0)
 	{
-		deltaTime = SDL_GetTicks();
+		deltaTime = (SDL_GetTicks() - prevFrameTime) / 1000.0f;
+		prevFrameTime = SDL_GetTicks();
 
 		if (G_debugStopRotation == 0)
 		{
-			modelData.rotation.x += 0.01f;
-			modelData.rotation.y += 0.015f;
-			modelData.rotation.z += 0.015f;
+			/*modelData.rotation.x += 0.15f * deltaTime;
+			modelData.rotation.y += 0.15f * deltaTime;
+			modelData.rotation.z += 0.15f * deltaTime;*/
+
+			//camera.position.x = 0; //+= 0.008f * deltaTime;
+			//camera.position.y = 0; //+= 0.008f * deltaTime;
 		}
 
 		//zoom out the model
 		modelData.translation.z = 16.0f;
 
-		Mat4_t scaleMat = Mat4_MakeScale(
+		//compute the rotation & translation for the camera
+		//create view matrix
+		vec3_t target = { 0,0,1 };
+		vec3_t up_dir = { 0,1,0 };
+
+		mat4_t cameraYawRotMat = Mat4_MakeRotationY(camera.yawAngle);
+		camera.direction = M_Vec3FromVec4(Mat4_MulVec4(cameraYawRotMat, M_Vec4FromVec3(target)));
+		target = M_AddVec3(camera.position, camera.direction);
+		mat4_t viewMat = Mat4_LookAt(camera.position, target, up_dir);
+
+
+		mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
 			modelData.scale.y,
 			modelData.scale.z
 		);
 
-		Mat4_t transMat = Mat4_MakeTranslation(
+		mat4_t transMat = Mat4_MakeTranslation(
 			modelData.translation.x,
 			modelData.translation.y,
 			modelData.translation.z
 		);
 
-		Mat4_t rotMatX = Mat4_MakeRotationX(modelData.rotation.x);
-		Mat4_t rotMatY = Mat4_MakeRotationX(modelData.rotation.y);
-		Mat4_t rotMatZ = Mat4_MakeRotationZ(modelData.rotation.z);
+		mat4_t rotMatX = Mat4_MakeRotationX(modelData.rotation.x);
+		mat4_t rotMatY = Mat4_MakeRotationX(modelData.rotation.y);
+		mat4_t rotMatZ = Mat4_MakeRotationZ(modelData.rotation.z);
 
-		Vec3_t faceVertecies[3];
+
+		vec3_t faceVertecies[3];
 		int transformedVtxCnt = 0;
 
 		for (uint32_t i = 0; i < modelData.facesCnt; i += 1)
@@ -131,27 +148,38 @@ void G_RunRenderLoop()
 
 			for (int j = 0; j < 3; j++)
 			{
-				Vec4_t v = M_Vec4FromVec3(faceVertecies[j]);
-
-				Mat4_t worldMatrix = Mat4_MakeIdentity();
-				Mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
+				mat4_t worldMatrix = Mat4_MakeIdentity();
+				mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
 				worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
-				v = Mat4_MulVec4(worldMatrix, v);
 
-				faceVertecies[j] = M_Vec3FromVec4(v);
+				//multiply the original vector by the world matrix
+				vec4_t original_vector = M_Vec4FromVec3(faceVertecies[j]);
+				vec4_t transformed_vector = Mat4_MulVec4(worldMatrix, original_vector);
+
+				//multiply the transformed vector by the view matrix to update it according to the camera
+				transformed_vector = Mat4_MulVec4(viewMat, transformed_vector);
+
+				//save to transformed vertices array
+				faceVertecies[j] = M_Vec3FromVec4(transformed_vector);
 			}
 
 			G_ClipFaceZ(&faceVertecies[0], &faceVertecies[1], &faceVertecies[2]);
 
-			faceVertecies[0] = M_TranslateVec3(faceVertecies[0], camera);
-			faceVertecies[1] = M_TranslateVec3(faceVertecies[1], camera);
-			faceVertecies[2] = M_TranslateVec3(faceVertecies[2], camera);
+			//faceVertecies[0] = M_TranslateVec3(faceVertecies[0], camera.position);
+			//faceVertecies[1] = M_TranslateVec3(faceVertecies[1], camera.position);
+			//faceVertecies[2] = M_TranslateVec3(faceVertecies[2], camera.position);
 
 			if (G_debugEnableBackfaceCulling == 1)
 			{
-				if (M_IsFrontFace(
-					faceVertecies[0], faceVertecies[1], faceVertecies[2],
-					camera) == G_debugInvertBackFaceCulling)
+				vec3_t origin = { 0,0,0 };
+
+				int isFrontFace = M_IsFrontFace(
+					faceVertecies[0],
+					faceVertecies[1], 
+					faceVertecies[2],
+					origin);
+
+				if (isFrontFace == G_debugInvertBackFaceCulling)
 				{
 					continue;
 				}
@@ -180,9 +208,9 @@ void G_RunRenderLoop()
 		for (int i = 0; i < transformedVtxCnt; i++)
 		{
 			//convert to quaternions to mul with matrices
-			Vec4_t v4d1 = M_Vec4FromVec3(transformed[i].vertices[0]);
-			Vec4_t v4d2 = M_Vec4FromVec3(transformed[i].vertices[1]);
-			Vec4_t v4d3 = M_Vec4FromVec3(transformed[i].vertices[2]);
+			vec4_t v4d1 = M_Vec4FromVec3(transformed[i].vertices[0]);
+			vec4_t v4d2 = M_Vec4FromVec3(transformed[i].vertices[1]);
+			vec4_t v4d3 = M_Vec4FromVec3(transformed[i].vertices[2]);
 
 			//multiply by the projection matrix
 			v4d1 = Mat4_MulVec4ProjectionMat4(v4d1, projMat);
@@ -190,9 +218,9 @@ void G_RunRenderLoop()
 			v4d3 = Mat4_MulVec4ProjectionMat4(v4d3, projMat);
 
 			//convert to screen-space 2d vectors
-			Vec2_t v2d1 = M_Vec2FromVec4(v4d1);
-			Vec2_t v2d2 = M_Vec2FromVec4(v4d2);
-			Vec2_t v2d3 = M_Vec2FromVec4(v4d3);
+			vec2_t v2d1 = M_Vec2FromVec4(v4d1);
+			vec2_t v2d2 = M_Vec2FromVec4(v4d2);
+			vec2_t v2d3 = M_Vec2FromVec4(v4d3);
 
 			//screen-space scale
 			M_Vec2ScaleFace(
@@ -213,9 +241,9 @@ void G_RunRenderLoop()
 				/*uint32_t color = G_LightIntensity(0xFFFF00FF, lightPerc);
 				G_SetDrawColor(color);
 				G_RasterTriangle(v2d1, v2d2, v2d3);*/
-				Vec4_t v1 = M_Vec4FromVec2(v2d1);
-				Vec4_t v2 = M_Vec4FromVec2(v2d2);
-				Vec4_t v3 = M_Vec4FromVec2(v2d3);
+				vec4_t v1 = M_Vec4FromVec2(v2d1);
+				vec4_t v2 = M_Vec4FromVec2(v2d2);
+				vec4_t v3 = M_Vec4FromVec2(v2d3);
 
 				v1.z = v4d1.z;
 				v1.w = v4d1.w;
@@ -236,9 +264,9 @@ void G_RunRenderLoop()
 			//texture map
 			if (G_debugRenderTextured)
 			{
-				Vec4_t v1 = M_Vec4FromVec2(v2d1);
-				Vec4_t v2 = M_Vec4FromVec2(v2d2);
-				Vec4_t v3 = M_Vec4FromVec2(v2d3);
+				vec4_t v1 = M_Vec4FromVec2(v2d1);
+				vec4_t v2 = M_Vec4FromVec2(v2d2);
+				vec4_t v3 = M_Vec4FromVec2(v2d3);
 
 				v1.z = v4d1.z;
 				v1.w = v4d1.w;
@@ -284,8 +312,7 @@ void G_RunRenderLoop()
 		G_ClearBuffer();
 		G_ClearZBuffer();
 
-		deltaTime = SDL_GetTicks() - deltaTime;
-		G_CapFrameRate(deltaTime);
+		//G_CapFrameRate(deltaTime);
 	}
 
 	free(zBuffer);
@@ -303,6 +330,7 @@ void RenderZBuffer()
 			uint32_t g = (0xFFFFFFFF & 0x00FF0000) * -zBuff * 20;
 			uint32_t b = (0xFFFFFFFF & 0x0000FF00) * -zBuff * 20;
 			uint32_t a = (0xFFFFFFFF & 0x000000FF);
+
 			uint32_t clr = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | a;
 
 			screenBuffer[(_ScreenW * y) + x] = clr;
@@ -310,9 +338,9 @@ void RenderZBuffer()
 	}
 }
 
-float G_CalcFaceIllumination(Vec3_t face[3], Vec3_t lightDir)
+float G_CalcFaceIllumination(vec3_t face[3], vec3_t lightDir)
 {
-	Vec3_t normal = M_NormalVec3(face[0], face[1], face[2]);
+	vec3_t normal = M_NormalVec3(face[0], face[1], face[2]);
 
 	normal = M_NormalizeVec3(normal);
 
@@ -337,7 +365,7 @@ uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor)
 	return newColor;
 }
 
-void G_ClipFaceZ(Vec3_t* v1, Vec3_t* v2, Vec3_t* v3)
+void G_ClipFaceZ(vec3_t* v1, vec3_t* v2, vec3_t* v3)
 {
 	if (v1->z < 0.01f)
 		v1->z = 0.01f;
@@ -347,13 +375,13 @@ void G_ClipFaceZ(Vec3_t* v1, Vec3_t* v2, Vec3_t* v3)
 		v3->z = 0.01f;
 }
 
-void G_DrawVertex(Vec2_t v, uint32_t size)
+void G_DrawVertex(vec2_t v, uint32_t size)
 {
 	for (uint32_t i = 0; i < size; i++)
 	{
 		for (uint32_t j = 0; j < size; j++)
 		{
-			Vec2_t v2 = v;
+			vec2_t v2 = v;
 			v2.x += i;
 			v2.y += j;
 			G_DrawPoint(v2);
@@ -434,7 +462,7 @@ void G_SetDrawColor(uint32_t colorHex)
 	drawColor = colorHex;
 }
 
-void G_DrawPoint(Vec2_t v)
+void G_DrawPoint(vec2_t v)
 {
 	if (v.x < 0.0 || v.x >= _ScreenW || v.y < 0.0 || v.y >= _ScreenH)
 		return;
@@ -456,7 +484,7 @@ void G_DrawPointI(uint32_t x, uint32_t y)
 	screenBuffer[_ScreenW * (uint32_t)y + (uint32_t)x] = drawColor;
 }
 
-void G_DrawPointColor(Vec2_t v, uint32_t color)
+void G_DrawPointColor(vec2_t v, uint32_t color)
 {
 	if (v.x < 0 || v.x > _ScreenW || v.y < 0 || v.y > _ScreenH)
 		return;
@@ -493,7 +521,7 @@ void G_DrawLineXY2(int x0, int y0, int x1, int y1)
 
 	for (int i = 0; i <= longestSideLen; i++)
 	{
-		Vec2_t point;
+		vec2_t point;
 		point.x = roundf(curX);
 		point.y = roundf(curY);
 		G_DrawPoint(point);
@@ -503,14 +531,14 @@ void G_DrawLineXY2(int x0, int y0, int x1, int y1)
 	}
 }
 
-void G_DrawLine(Vec2_t p1, Vec2_t p2)
+void G_DrawLine(vec2_t p1, vec2_t p2)
 {
-	Vec2i_t pi1 = { (int)p1.x, (int)p1.y };
-	Vec2i_t pi2 = { (int)p2.x, (int)p2.y };
+	vec2i_t pi1 = { (int)p1.x, (int)p1.y };
+	vec2i_t pi2 = { (int)p2.x, (int)p2.y };
 	G_DrawLineI(pi1, pi2);
 }
 
-void G_DrawLineI(Vec2i_t p1, Vec2i_t p2)
+void G_DrawLineI(vec2i_t p1, vec2i_t p2)
 {
 	int x0 = p1.x, 
 		y0 = p1.y, 
@@ -549,7 +577,7 @@ void G_ClearBuffer()
 }
 
 //p3 = midPoint
-void G_RasterTopHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
+void G_RasterTopHalfTriangle(vec2_t p1, vec2_t p2, vec2_t p3)
 {
 	float inv_slope1 = (float)((int)p2.x - (int)p1.x) / ((int)p2.y - (int)p1.y);
 	float inv_slope2 = (float)((int)p3.x - (int)p1.x) / ((int)p3.y - (int)p1.y);
@@ -559,7 +587,7 @@ void G_RasterTopHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 	//TOP to BOTTOM
 	for (int y = (int)p1.y; y <= (int)p3.y; y++)
 	{
-		Vec2i_t a, b;
+		vec2i_t a, b;
 		a.x = (int)x_start;
 		a.y = y;
 		b.x = (int)x_end;
@@ -573,7 +601,7 @@ void G_RasterTopHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 }
 
 //p2 = midPoint
-void G_RasterBottomHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
+void G_RasterBottomHalfTriangle(vec2_t p1, vec2_t p2, vec2_t p3)
 {
 	//Draw bottom to top
 	float inv_slope1 = (float)((int)p3.x - (int)p1.x) / ((int)p3.y - (int)p1.y);
@@ -584,7 +612,7 @@ void G_RasterBottomHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 	//BOTTOM to TOP
 	for (int y = (int)p3.y; y >= (int)p1.y; y--)
 	{
-		Vec2i_t a, b;
+		vec2i_t a, b;
 		a.x = x_start;
 		a.y = y;
 		b.x = x_end;
@@ -624,7 +652,7 @@ void G_RasterBottomHalfTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 				   (x,y)
 */
 
-void G_RasterTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
+void G_RasterTriangle(vec2_t p1, vec2_t p2, vec2_t p3)
 {
 	M_SortTrianglePointsY(&p1, &p2, &p3);
 
@@ -638,14 +666,14 @@ void G_RasterTriangle(Vec2_t p1, Vec2_t p2, Vec2_t p3)
 		G_RasterBottomHalfTriangle(p1, p2, p3);
 	else
 	{
-		Vec2_t midPoint = M_CalcTriangleMidPoint(p1, p2, p3);
+		vec2_t midPoint = M_CalcTriangleMidPoint(p1, p2, p3);
 		G_RasterTopHalfTriangle(p1, p2, midPoint);
 		G_RasterBottomHalfTriangle(p2, midPoint, p3);
 	}
 }
 
 void G_RenderTexturedTriangle(
-	Vec4_t p1, Vec4_t p2, Vec4_t p3,
+	vec4_t p1, vec4_t p2, vec4_t p3,
 	Tex2_t tp1, Tex2_t tp2, Tex2_t tp3, 
 	uint32_t* texture, float lightPrecFactor,
 	int isSolidColor, uint32_t color)
@@ -752,16 +780,16 @@ void G_RenderTexturedTriangle(
 }
 
 void G_DrawTexel(int x, int y, uint32_t* texture,
-	Vec4_t point_a, Vec4_t point_b, Vec4_t point_c,
+	vec4_t point_a, vec4_t point_b, vec4_t point_c,
 	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c, 
 	float lightPercFactor)
 {
-	Vec2_t p = { x, y };
-	Vec2_t a = M_Vec2FromVec4(point_a);
-	Vec2_t b = M_Vec2FromVec4(point_b);
-	Vec2_t c = M_Vec2FromVec4(point_c);
+	vec2_t p = { x, y };
+	vec2_t a = M_Vec2FromVec4(point_a);
+	vec2_t b = M_Vec2FromVec4(point_b);
+	vec2_t c = M_Vec2FromVec4(point_c);
 
-	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
+	vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
 
 	float alpha = bWeights.x;
 	float beta = bWeights.y;
@@ -795,16 +823,16 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 }
 
 void G_DrawPixel(int x, int y, uint32_t color,
-	Vec4_t point_a, Vec4_t point_b, Vec4_t point_c,
+	vec4_t point_a, vec4_t point_b, vec4_t point_c,
 	Tex2_t uv_a, Tex2_t uv_b, Tex2_t uv_c,
 	float lightPercFactor)
 {
-	Vec2_t p = { x, y };
-	Vec2_t a = M_Vec2FromVec4(point_a);
-	Vec2_t b = M_Vec2FromVec4(point_b);
-	Vec2_t c = M_Vec2FromVec4(point_c);
+	vec2_t p = { x, y };
+	vec2_t a = M_Vec2FromVec4(point_a);
+	vec2_t b = M_Vec2FromVec4(point_b);
+	vec2_t c = M_Vec2FromVec4(point_c);
 
-	Vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
+	vec3_t bWeights = M_BarycentricWeights(a, b, c, p);
 
 	float alpha = bWeights.x;
 	float beta = bWeights.y;

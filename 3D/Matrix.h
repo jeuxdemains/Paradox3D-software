@@ -5,17 +5,18 @@
 typedef struct
 {
 	float m[4][4];
-} Mat4_t;
+} mat4_t;
 
-Mat4_t Mat4_MakeIdentity(void);
-Mat4_t Mat4_MakeScale(float sx, float sy, float sz);
-Vec4_t Mat4_MulVec4(Mat4_t m, Vec4_t v);
-Mat4_t Mat4_MakeTranslation(float tx, float ty, float tz);
-Mat4_t Mat4_MakeRotationX(float angle);
-Mat4_t Mat4_MakeRotationY(float angle);
-Mat4_t Mat4_MakeRotationZ(float angle);
-Mat4_t Mat4_MakePerspective(float aspect, float fov, float zNear, float zFar);
+mat4_t Mat4_MakeIdentity(void);
+mat4_t Mat4_MakeScale(float sx, float sy, float sz);
+vec4_t Mat4_MulVec4(mat4_t m, vec4_t v);
+mat4_t Mat4_MakeTranslation(float tx, float ty, float tz);
+mat4_t Mat4_MakeRotationX(float angle);
+mat4_t Mat4_MakeRotationY(float angle);
+mat4_t Mat4_MakeRotationZ(float angle);
+mat4_t Mat4_MakePerspective(float aspect, float fov, float zNear, float zFar);
+mat4_t Mat4_LookAt(vec3_t eye, vec3_t target, vec3_t up);
 
-Mat4_t Mat4_MulMat4(Mat4_t m1, Mat4_t m2);
-Mat4_t Mat4_Mul4Mat4(Mat4_t m1, Mat4_t m2, Mat4_t m3, Mat4_t world);
-Vec4_t Mat4_MulVec4ProjectionMat4(Vec4_t v, Mat4_t projMat);
+mat4_t Mat4_MulMat4(mat4_t m1, mat4_t m2);
+mat4_t Mat4_Mul4Mat4(mat4_t m1, mat4_t m2, mat4_t m3, mat4_t world);
+vec4_t Mat4_MulVec4ProjectionMat4(vec4_t v, mat4_t projMat);
