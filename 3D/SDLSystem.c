@@ -97,36 +97,39 @@ void HandleDebug(SDL_Event event)
 
 void HandleCamera(SDL_Event event, float deltaTime)
 {
-	if (event.key.keysym.sym == SDLK_e)
+	const float walkSpeed = 30.0f;
+	const float rotSpeed = 8.0f;
+
+	if (event.key.keysym.sym == SDLK_w)
 	{
 		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_AddVec3(camera.position, camera.forwardVelocity);
 	}
 
-	if (event.key.keysym.sym == SDLK_c)
+	if (event.key.keysym.sym == SDLK_s)
 	{
 		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_SubVec3(camera.position, camera.forwardVelocity);
 	}
 
-	if (event.key.keysym.sym == SDLK_w)
+	if (event.key.keysym.sym == SDLK_e)
 	{
-		camera.position.y -= 16.0f * deltaTime;
+		camera.position.y -= walkSpeed * deltaTime;
 	}
 
-	if (event.key.keysym.sym == SDLK_s)
+	if (event.key.keysym.sym == SDLK_c)
 	{
-		camera.position.y += 16.0f * deltaTime;
+		camera.position.y += walkSpeed * deltaTime;
 	}
 
 	if (event.key.keysym.sym == SDLK_a)
 	{
-		camera.yawAngle -= 3.0f * deltaTime;
+		camera.yawAngle -= rotSpeed * deltaTime;
 	}
 
 	if (event.key.keysym.sym == SDLK_d)
 	{
-		camera.yawAngle += 3.0f * deltaTime;
+		camera.yawAngle += rotSpeed * deltaTime;
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "Matrix.h"
 #include "camera.h"
 #include "clipping.h"
+#include "OBJModelLoader.h"
 
 #define FPS_TARGET 60
 

@@ -53,9 +53,9 @@ void G_ClearZBuffer()
 void G_RunRenderLoop()
 {
 	SDLSystemInit();
-	_ScreenW = 800;
-	_ScreenH = 600;
-	SDL_Window* window = SDLSystemCreateWindow(_ScreenW, _ScreenH);
+	_ScreenW = 150;
+	_ScreenH = 100;
+	SDL_Window* window = SDLSystemCreateWindow(1024, 768);
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
 
 	G_InitZBuffer(_ScreenW, _ScreenH);
@@ -77,11 +77,14 @@ void G_RunRenderLoop()
 	T_texWidth = 64;
 	T_texHeight = 64;
 
+	//Open model 
+	OBJ_LoadModel("model.obj", &modelData);
+
 	//init model
-	modelData.faces = modelCubeFaces; //&faces; // &carFaces;
-	modelData.vertices = modelCube; //&model; // &carModel;
-	modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
-	modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
+	//modelData.faces = modelCubeFaces; //&faces; // &carFaces;
+	//modelData.vertices = modelCube; //&model; // &carModel;
+	//modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
+	//modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
 
 	//init model
 	//modelData.faces = faces; // &carFaces;
