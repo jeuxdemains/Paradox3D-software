@@ -8,6 +8,10 @@
 #include "OBJModelLoader.h"
 
 #define FPS_TARGET 60
+#define LOGICAL_SCRN_W 1024
+#define LOGICAL_SCRN_H 768
+#define SCRN_W LOGICAL_SCRN_W/4;
+#define SCRN_H LOGICAL_SCRN_H/4;
 
 typedef struct
 {
@@ -54,7 +58,7 @@ void G_RenderTexturedTriangle(
 
 void G_ClearBuffer();
 void G_SetDrawColor(uint32_t colorHex);
-void G_DrawXYColor(int x, int y, uint32_t color);
+void G_DrawXYColor(uint32_t x, uint32_t y, uint32_t color);
 uint32_t G_ColorFromZ(float depth, uint32_t color);
 void G_CapFrameRate(uint32_t deltaTime);
 void G_SortFacesByZ(TransformedModelFace_t* model, uint32_t cnt);
@@ -64,4 +68,6 @@ uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor);
 float G_CalcFaceIllumination(vec3_t face[3], vec3_t lightDir);
 void G_InitZBuffer(int w, int h);
 void G_ClearZBuffer();
-void RenderZBuffer();
+void G_RenderZBuffer();
+void G_Shutdown(void);
+void G_Init(void);

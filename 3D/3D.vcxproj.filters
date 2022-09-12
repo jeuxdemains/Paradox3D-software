@@ -45,6 +45,9 @@
     <ClCompile Include="OBJModelLoader.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="upng.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDLSystem.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OBJModelLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="upng.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

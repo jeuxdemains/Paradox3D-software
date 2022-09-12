@@ -27,14 +27,12 @@ void SDLSystemInitScreenBuffer(uint32_t w, uint32_t h)
 void SDLSystemCreateScreenTexture(uint32_t w, uint32_t h)
 {
 	screenTexture = SDL_CreateTexture(
-		sdlSystemRenderer, SDL_PIXELFORMAT_RGBA8888, 
+		sdlSystemRenderer, SDL_PIXELFORMAT_RGBA32, 
 		SDL_TEXTUREACCESS_STREAMING, w, h);
 }
 
 SDL_Window* SDLSystemCreateWindow(uint32_t w, uint32_t h)
 {
-	_ScreenW = w;
-	_ScreenH = h;
 	SDLSystemInitScreenBuffer(w, h);
 	sdlSystemWindow = SDL_CreateWindow(
 		"Paradox 3D", SDL_WINDOWPOS_CENTERED, 

@@ -20,9 +20,6 @@ SDL_Renderer* sdlSystemRenderer;
 SDL_Window* sdlSystemWindow;
 SDL_Texture* screenTexture;
 
-
-
-
 void SDLSystemInit();
 void SDLSystemShutdown();
 

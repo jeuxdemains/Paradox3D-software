@@ -5,7 +5,6 @@ Position_t worldPosition =
 	.pos = {0,0,0}
 };
 
-
 G_debugEnableBackfaceCulling = 1;
 G_debugInvertBackFaceCulling = 0; //1 = normal; -1 = inverted
 G_debugDrawWireframe = 1;
@@ -17,6 +16,13 @@ Light_t light = { { 0.0f, 0.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
 float vertDirCW = -1.0f; //1 = CW; -1 = CCW
 float* zBuffer = NULL;
+
+float aspectx;
+float aspecty;
+float fovy;
+float fovx;
+float zNear;
+float zFar;
 
 Model_t modelData =
 {
@@ -50,37 +56,37 @@ void G_ClearZBuffer()
 	}
 }
 
-void G_RunRenderLoop()
+void G_Init(void)
 {
 	SDLSystemInit();
-	_ScreenW = 150;
-	_ScreenH = 100;
-	SDL_Window* window = SDLSystemCreateWindow(1024, 768);
+	_ScreenW = SCRN_W;
+	_ScreenH = SCRN_H;
+	int logicalScreenW = LOGICAL_SCRN_W;
+	int logicalScreenH = LOGICAL_SCRN_H;
+	SDL_Window* window = SDLSystemCreateWindow(logicalScreenW, logicalScreenH);
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
 
 	G_InitZBuffer(_ScreenW, _ScreenH);
 
 	//init aspect, fov, projection matrix
-	float aspectx = (float)_ScreenW / (float)_ScreenH;
-	float aspecty = (float)_ScreenH / (float)_ScreenW;
-	float fovy = 3.14159f / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
-	float fovx = atan(tanf(fovy / 2) * aspectx) * 2.0f;
-	float zNear = 0.1f;
-	float zFar = 100.0f;
+	aspectx = (float)_ScreenW / (float)_ScreenH;
+	aspecty = (float)_ScreenH / (float)_ScreenW;
+	fovy = 3.14159f / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
+	fovx = atan(tanf(fovy / 2) * aspectx) * 4.0f;
+	zNear = 1.0f;
+	zFar = 1000.0f;
 	projMat = Mat4_MakePerspective(aspecty, fovy, zNear, zFar);
 
 	//init frustum planes
 	C_InitFrustumPlanes(fovx, fovy, zNear, zFar);
 
 	//init texture
-	T_meshTexture = (uint32_t*)REDBRICK_TEXTURE;
-	T_texWidth = 64;
-	T_texHeight = 64;
+	T_LoadPngTexture("texture.png");
 
 	//Open model 
 	OBJ_LoadModel("model.obj", &modelData);
 
-	//init model
+	//init model CUBE
 	//modelData.faces = modelCubeFaces; //&faces; // &carFaces;
 	//modelData.vertices = modelCube; //&model; // &carModel;
 	//modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
@@ -92,6 +98,11 @@ void G_RunRenderLoop()
 	//modelData.facesCnt = sizeof(faces) / sizeof(*faces);
 	//modelData.vecCnt = sizeof(model) / sizeof(*model);
 
+}
+
+void G_RunRenderLoop()
+{
+	G_Init();
 
 	printf("Rendering %d vertices with %d faces\n",
 		modelData.vecCnt, modelData.facesCnt);
@@ -106,9 +117,9 @@ void G_RunRenderLoop()
 
 		if (G_debugStopRotation == 0)
 		{
-			/*modelData.rotation.x += 0.15f * deltaTime;
+			modelData.rotation.x += 0.15f * deltaTime;
 			modelData.rotation.y += 0.15f * deltaTime;
-			modelData.rotation.z += 0.15f * deltaTime;*/
+			modelData.rotation.z += 0.15f * deltaTime;
 
 			//camera.position.x = 0; //+= 0.008f * deltaTime;
 			//camera.position.y = 0; //+= 0.008f * deltaTime;
@@ -156,9 +167,9 @@ void G_RunRenderLoop()
 			int b = modelData.faces[i].b;
 			int c = modelData.faces[i].c;
 
-			faceVertecies[0] = modelData.vertices[a - 1];
-			faceVertecies[1] = modelData.vertices[b - 1];
-			faceVertecies[2] = modelData.vertices[c - 1];
+			faceVertecies[0] = modelData.vertices[a];
+			faceVertecies[1] = modelData.vertices[b];
+			faceVertecies[2] = modelData.vertices[c];
 			
 
 			//TRANSFORM
@@ -293,7 +304,7 @@ void G_RunRenderLoop()
 					transformed[i].texCrds[1],
 					transformed[i].texCrds[2],
 					0, lightPerc,
-					1, 0xFFFF00FF);
+					1, 0xFFFFFFFF);
 			}
 
 			//texture map
@@ -341,7 +352,7 @@ void G_RunRenderLoop()
 		}
 
 		if (G_debugRenderZBuffer)
-			RenderZBuffer();
+			G_RenderZBuffer();
 
 		SDLSystemRender();
 		G_ClearBuffer();
@@ -350,11 +361,17 @@ void G_RunRenderLoop()
 		//G_CapFrameRate(deltaTime);
 	}
 
+	G_Shutdown();
+}
+
+void G_Shutdown(void)
+{
+	T_FreeResources();
 	free(zBuffer);
 	SDLSystemShutdown();
 }
 
-void RenderZBuffer()
+void G_RenderZBuffer()
 {
 	for (uint32_t y = 0; y < _ScreenH; y++)
 	{
@@ -376,7 +393,6 @@ void RenderZBuffer()
 float G_CalcFaceIllumination(vec3_t face[3], vec3_t lightDir)
 {
 	vec3_t normal = M_NormalVec3(face[0], face[1], face[2]);
-
 	normal = M_NormalizeVec3(normal);
 
 	float lightPerc = vertDirCW * M_DotVec3(normal, light.direction);
@@ -393,9 +409,9 @@ uint32_t G_LightIntensity(uint32_t originalColor, float percentageFactor)
 	uint32_t r = (originalColor & 0xFF000000) * percentageFactor;
 	uint32_t g = (originalColor & 0x00FF0000) * percentageFactor;
 	uint32_t b = (originalColor & 0x0000FF00) * percentageFactor;
-	uint32_t a = (originalColor & 0x000000FF);
+	uint32_t a = (originalColor & 0x000000FF) * percentageFactor;
 
-	uint32_t newColor = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | a;
+	uint32_t newColor = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | (a & 0x000000FF);
 
 	return newColor;
 }
@@ -849,7 +865,10 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 
 	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
 	{
-		uint32_t color = G_LightIntensity(texture[(T_texWidth * tex_y) + tex_x], lightPercFactor);
+		uint32_t color = G_LightIntensity(
+			texture[(T_texWidth * tex_y) + tex_x], 
+			lightPercFactor);
+
 		G_DrawXYColor(x, y, color);
 
 		//update the Z-Buffer

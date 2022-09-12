@@ -10,9 +10,11 @@ void OBJ_LoadModel(char* fileName, Model_t* modelData)
 
 	char line[1024];
 	vec3_t vertices[MAX_OBJ_VTX_CNT];
+	tex2_t texUV[MAX_OBJ_VTX_CNT];
 	FaceTex_t faces[MAX_OBJ_FACE_CNT];
 
 	int vertCnt = 0;
+	int texCnt = 0;
 	int faceCnt = 0;
 
 	while (fgets(line, 1024, file))
@@ -25,11 +27,36 @@ void OBJ_LoadModel(char* fileName, Model_t* modelData)
 			vertices[vertCnt++] = vertex;
 		}
 
+		//read texture UV
+		if (strncmp(line, "vt ", 3) == 0)
+		{
+			tex2_t tex;
+			sscanf_s(line, "vt %f %f", &tex.u, &tex.v);
+			texUV[texCnt++] = tex;
+		}
+
 		//read face
 		if (strncmp(line, "f ", 2) == 0)
 		{
-			FaceTex_t face;
-			sscanf_s(line, "f %d %d %d", &face.a, &face.b, &face.c);
+			int vertIndecies[3];
+			int texIndecied[3];
+			int normalIndecies[3];
+
+			sscanf_s(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", 
+				&vertIndecies[0], &texIndecied[0], &normalIndecies[0],
+				&vertIndecies[1], &texIndecied[1], &normalIndecies[1],
+				&vertIndecies[2], &texIndecied[2], &normalIndecies[2]);
+
+			FaceTex_t face =
+			{
+				.a = vertIndecies[0] - 1,
+				.b = vertIndecies[1] - 1,
+				.c = vertIndecies[2] - 1,
+				.a_uv = texUV[texIndecied[0] - 1],
+				.b_uv = texUV[texIndecied[1] - 1],
+				.c_uv = texUV[texIndecied[2] - 1],
+			};
+
 			faces[faceCnt++] = face;
 		}
 	}
@@ -51,6 +78,9 @@ void OBJ_LoadModel(char* fileName, Model_t* modelData)
 		modelData->faces[i].a = faces[i].a;
 		modelData->faces[i].b = faces[i].b;
 		modelData->faces[i].c = faces[i].c;
+		modelData->faces[i].a_uv = faces[i].a_uv;
+		modelData->faces[i].b_uv = faces[i].b_uv;
+		modelData->faces[i].c_uv = faces[i].c_uv;
 	}
 
 	modelData->vecCnt = vertCnt;
