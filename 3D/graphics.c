@@ -11,10 +11,10 @@ G_debugDrawWireframe = 1;
 G_debugRenderTextured = 1;
 G_debugRenderZBuffer = 0;
 
-//vec3_t camera = { 0, 0, 0 };
-Light_t light = { { 0.0f, 0.0f, 1.0f } };
+Light_t light = { { 0.0f, 1.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
 float vertDirCW = -1.0f; //1 = CW; -1 = CCW
+float lightTheta = 0.0f;
 float* zBuffer = NULL;
 
 float aspectx;
@@ -117,17 +117,21 @@ void G_RunRenderLoop()
 
 		if (G_debugStopRotation == 0)
 		{
-			modelData.rotation.x += 0.15f * deltaTime;
+			/*modelData.rotation.x += 0.15f * deltaTime;
 			modelData.rotation.y += 0.15f * deltaTime;
-			modelData.rotation.z += 0.15f * deltaTime;
+			modelData.rotation.z += 0.15f * deltaTime;*/
 
 			//camera.position.x = 0; //+= 0.008f * deltaTime;
 			//camera.position.y = 0; //+= 0.008f * deltaTime;
+			lightTheta += 2.0f * deltaTime;
+			//light.direction.x += 2.0f * deltaTime * cosf(lightTheta);
+			//light.direction.y += 2.0f * deltaTime * cosf(lightTheta);
+			light.direction.z += 3.0f * deltaTime * sinf(lightTheta);
 		}
 
 		//zoom out the model
 		//modelData.translation.z = 16.0f;
-		modelData.translation.z = 2.0f;
+		modelData.translation.z = 20.0f;
 
 		//compute the rotation & translation for the camera
 		//create view matrix
@@ -139,6 +143,12 @@ void G_RunRenderLoop()
 		target = M_AddVec3(camera.position, camera.direction);
 		mat4_t viewMat = Mat4_LookAt(camera.position, target, up_dir);
 
+		//vec3_t lightTarget = { 0, -1, 1 };
+		//vec3_t lightOrigin = { 10, 10*sinf(lightTheta), 10};
+		//lightTarget = M_AddVec3(lightOrigin, light.direction);
+		//mat4_t lightMat = Mat4_LookAt(lightOrigin, lightTarget, up_dir);
+
+		
 
 		mat4_t scaleMat = Mat4_MakeScale(
 			modelData.scale.x,
@@ -171,11 +181,12 @@ void G_RunRenderLoop()
 			faceVertecies[1] = modelData.vertices[b];
 			faceVertecies[2] = modelData.vertices[c];
 			
+			mat4_t worldMatrix;
 
 			//TRANSFORM
 			for (int j = 0; j < 3; j++)
 			{
-				mat4_t worldMatrix = Mat4_MakeIdentity();
+				worldMatrix = Mat4_MakeIdentity();
 				mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
 				worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
 
@@ -282,8 +293,9 @@ void G_RunRenderLoop()
 				_ScreenW / 2.0f, _ScreenH / 2.0f);
 
 			//calc light intensity
+			//float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 			float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
-			
+
 			//rasterize
 			if (G_debugRasterize && !G_debugRenderTextured)
 			{

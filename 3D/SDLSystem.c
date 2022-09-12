@@ -95,39 +95,78 @@ void HandleDebug(SDL_Event event)
 
 void HandleCamera(SDL_Event event, float deltaTime)
 {
-	const float walkSpeed = 30.0f;
-	const float rotSpeed = 8.0f;
+	const float walkSpeed = 10.0f;
+	const float rotSpeed = 2.0f;
 
-	if (event.key.keysym.sym == SDLK_w)
+	if (event.type == SDL_KEYDOWN)
+	{
+		if (event.key.keysym.sym == SDLK_w)
+			movingForward = true;
+
+		if (event.key.keysym.sym == SDLK_s)
+			movingBack = true;
+
+		if (event.key.keysym.sym == SDLK_a)
+			rotLeft = true;
+
+		if (event.key.keysym.sym == SDLK_d)
+			rotRight = true;
+
+		if (event.key.keysym.sym == SDLK_e)
+			movingUp = true;
+
+		if (event.key.keysym.sym == SDLK_c)
+			movingDown = true;
+	}
+
+	if (event.type == SDL_KEYUP)
+	{
+		if (event.key.keysym.sym == SDLK_w)
+			movingForward = false;
+
+		if (event.key.keysym.sym == SDLK_s)
+			movingBack = false;
+
+		if (event.key.keysym.sym == SDLK_a)
+			rotLeft = false;
+
+		if (event.key.keysym.sym == SDLK_d)
+			rotRight = false;
+
+		if (event.key.keysym.sym == SDLK_e)
+			movingUp = false;
+
+		if (event.key.keysym.sym == SDLK_c)
+			movingDown = false;
+	}
+
+	if (movingForward)
 	{
 		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_AddVec3(camera.position, camera.forwardVelocity);
 	}
-
-	if (event.key.keysym.sym == SDLK_s)
+	else if (movingBack)
 	{
 		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
 		camera.position = M_SubVec3(camera.position, camera.forwardVelocity);
 	}
 
-	if (event.key.keysym.sym == SDLK_e)
-	{
-		camera.position.y -= walkSpeed * deltaTime;
-	}
-
-	if (event.key.keysym.sym == SDLK_c)
-	{
-		camera.position.y += walkSpeed * deltaTime;
-	}
-
-	if (event.key.keysym.sym == SDLK_a)
+	if (rotLeft)
 	{
 		camera.yawAngle -= rotSpeed * deltaTime;
 	}
-
-	if (event.key.keysym.sym == SDLK_d)
+	else if (rotRight)
 	{
 		camera.yawAngle += rotSpeed * deltaTime;
+	}
+
+	if (movingUp)
+	{
+		camera.position.y -= walkSpeed * deltaTime;
+	}
+	else if (movingDown)
+	{
+		camera.position.y += walkSpeed * deltaTime;
 	}
 }
 
@@ -142,8 +181,10 @@ int SDLHandleEvents(float deltaTime)
 	if (event.type == SDL_KEYDOWN)
 	{
 		HandleDebug(event);
-		HandleCamera(event, deltaTime);
 	}
+
+	HandleCamera(event, deltaTime);
+
 
 	return 0;
 }

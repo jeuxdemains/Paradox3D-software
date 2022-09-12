@@ -10,8 +10,8 @@
 #define FPS_TARGET 60
 #define LOGICAL_SCRN_W 1024
 #define LOGICAL_SCRN_H 768
-#define SCRN_W LOGICAL_SCRN_W/4;
-#define SCRN_H LOGICAL_SCRN_H/4;
+#define SCRN_W LOGICAL_SCRN_W/2;
+#define SCRN_H LOGICAL_SCRN_H/2;
 
 typedef struct
 {
