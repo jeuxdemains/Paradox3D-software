@@ -1,5 +1,18 @@
 #include "graphics.h"
 
+model_list_t models[2] =
+{ 
+	{
+		.modelName = "model.obj",
+		.textureName = "texture.png"
+	},
+	{
+		.modelName = "model2.obj",
+		.textureName = "texture2.png"
+	} 
+};
+int modelsCnt = 2;
+
 Position_t worldPosition =
 {
 	.pos = {0,0,0}
@@ -24,18 +37,6 @@ float fovx;
 float zNear;
 float zFar;
 
-Model_t modelData =
-{
-	.faces = NULL,
-	.facesCnt = 0,
-	.modelPosition = 0.0f,
-	.vecCnt = 0,
-	.vertices = NULL,
-	.rotation = {0,0,0},
-	.translation = {0,0,0},
-	.scale = {1.0f, 1.0f, 1.0f}
-};
-
 mat4_t projMat;
 TransformedModelFace_t transformed[1804];
 
@@ -53,6 +54,21 @@ void G_ClearZBuffer()
 		{
 			zBuffer[(_ScreenW * y) + x] = 1.0f;
 		}
+	}
+}
+
+void G_LoadModels()
+{
+	for (int i = 0; i < modelsCnt; i++)
+	{
+		//Open model 
+		Model_t model;
+		ModelInit(&model);
+		OBJ_LoadModel(models[i].modelName, &model);
+		ModelLoadPngTexture(models[i].textureName, &model);
+
+		allModels[i] = model;
+		allModelsCnt++;
 	}
 }
 
@@ -80,23 +96,10 @@ void G_Init(void)
 	//init frustum planes
 	C_InitFrustumPlanes(fovx, fovy, zNear, zFar);
 
-	//init texture
-	T_LoadPngTexture("texture.png");
+	//Load all models
+	G_LoadModels();
 
-	//Open model 
-	OBJ_LoadModel("model.obj", &modelData);
-
-	//init model CUBE
-	//modelData.faces = modelCubeFaces; //&faces; // &carFaces;
-	//modelData.vertices = modelCube; //&model; // &carModel;
-	//modelData.facesCnt = (sizeof(modelCubeFaces)) / (sizeof(*modelCubeFaces));
-	//modelData.vecCnt = sizeof(modelCube) / sizeof(*modelCube);
-
-	//init model
-	//modelData.faces = faces; // &carFaces;
-	//modelData.vertices = model; // &carModel;
-	//modelData.facesCnt = sizeof(faces) / sizeof(*faces);
-	//modelData.vecCnt = sizeof(model) / sizeof(*model);
+	printf("Models loaded.\n");
 
 }
 
@@ -104,8 +107,8 @@ void G_RunRenderLoop()
 {
 	G_Init();
 
-	printf("Rendering %d vertices with %d faces\n",
-		modelData.vecCnt, modelData.facesCnt);
+	/*printf("Rendering %d vertices with %d faces\n",
+		modelData->vecCnt, modelData->facesCnt);*/
 
 	float deltaTime = 0;
 	uint32_t prevFrameTime = 0;
@@ -115,251 +118,258 @@ void G_RunRenderLoop()
 		deltaTime = (SDL_GetTicks() - prevFrameTime) / 1000.0f;
 		prevFrameTime = SDL_GetTicks();
 
-		if (G_debugStopRotation == 0)
+		for (int i = 0; i < allModelsCnt; i++)
 		{
-			/*modelData.rotation.x += 0.15f * deltaTime;
-			modelData.rotation.y += 0.15f * deltaTime;
-			modelData.rotation.z += 0.15f * deltaTime;*/
+			Model_t* modelData = &allModels[i];
 
-			//camera.position.x = 0; //+= 0.008f * deltaTime;
-			//camera.position.y = 0; //+= 0.008f * deltaTime;
-			lightTheta += 2.0f * deltaTime;
-			//light.direction.x += 2.0f * deltaTime * cosf(lightTheta);
-			//light.direction.y += 2.0f * deltaTime * cosf(lightTheta);
-			light.direction.z += 3.0f * deltaTime * sinf(lightTheta);
-		}
-
-		//zoom out the model
-		//modelData.translation.z = 16.0f;
-		modelData.translation.z = 20.0f;
-
-		//compute the rotation & translation for the camera
-		//create view matrix
-		vec3_t target = { 0,0,1 };
-		vec3_t up_dir = { 0,1,0 };
-
-		mat4_t cameraYawRotMat = Mat4_MakeRotationY(camera.yawAngle);
-		camera.direction = M_Vec3FromVec4(Mat4_MulVec4(cameraYawRotMat, M_Vec4FromVec3(target)));
-		target = M_AddVec3(camera.position, camera.direction);
-		mat4_t viewMat = Mat4_LookAt(camera.position, target, up_dir);
-
-		//vec3_t lightTarget = { 0, -1, 1 };
-		//vec3_t lightOrigin = { 10, 10*sinf(lightTheta), 10};
-		//lightTarget = M_AddVec3(lightOrigin, light.direction);
-		//mat4_t lightMat = Mat4_LookAt(lightOrigin, lightTarget, up_dir);
-
-		
-
-		mat4_t scaleMat = Mat4_MakeScale(
-			modelData.scale.x,
-			modelData.scale.y,
-			modelData.scale.z
-		);
-
-		mat4_t transMat = Mat4_MakeTranslation(
-			modelData.translation.x,
-			modelData.translation.y,
-			modelData.translation.z
-		);
-
-		mat4_t rotMatX = Mat4_MakeRotationX(modelData.rotation.x);
-		mat4_t rotMatY = Mat4_MakeRotationX(modelData.rotation.y);
-		mat4_t rotMatZ = Mat4_MakeRotationZ(modelData.rotation.z);
-
-		vec3_t faceVertecies[3];
-		int transformedVtxCnt = 0;
-
-		//pseudo-update subroutine
-		for (uint32_t i = 0; i < modelData.facesCnt; i += 1)
-		{
-			FaceTex_t face = modelData.faces[i];
-			int a = modelData.faces[i].a;
-			int b = modelData.faces[i].b;
-			int c = modelData.faces[i].c;
-
-			faceVertecies[0] = modelData.vertices[a];
-			faceVertecies[1] = modelData.vertices[b];
-			faceVertecies[2] = modelData.vertices[c];
-			
-			mat4_t worldMatrix;
-
-			//TRANSFORM
-			for (int j = 0; j < 3; j++)
+			if (i == 1)
 			{
-				worldMatrix = Mat4_MakeIdentity();
-				mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
-				worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
+				modelData->rotation.x += 0.15f * deltaTime;
+				//modelData->rotation.y += 0.15f * deltaTime;
+				modelData->rotation.z = -20.0f;
 
-				//multiply the original vector by the world matrix
-				vec4_t original_vector = M_Vec4FromVec3(faceVertecies[j]);
-				vec4_t transformed_vector = Mat4_MulVec4(worldMatrix, original_vector);
+				modelData->translation.y += 2.5f * sinf(lightTheta) * deltaTime;
 
-				//multiply the transformed vector by the view matrix to update it according to the camera
-				transformed_vector = Mat4_MulVec4(viewMat, transformed_vector);
-
-				//save to transformed vertices array
-				faceVertecies[j] = M_Vec3FromVec4(transformed_vector);
+				//camera.position.x = 0; //+= 0.008f * deltaTime;
+				//camera.position.y = 0; //+= 0.008f * deltaTime;
+				lightTheta += 2.0f * deltaTime;
+				light.direction.x += 3.14f*2 * cosf(lightTheta) * deltaTime;
+				//light.direction.y += 2.0f * deltaTime * cosf(lightTheta);
+				//light.direction.z += 3.0f * cosf(lightTheta) * deltaTime;
 			}
 
-			//G_ClipFaceZ(&faceVertecies[0], &faceVertecies[1], &faceVertecies[2]);
+			//zoom out the model
+			//modelData->translation.z = 16.0f;
+			modelData->translation.z = 20.0f;
+			
+			//compute the rotation & translation for the camera
+			//create view matrix
+			vec3_t target = { 0,0,1 };
+			vec3_t up_dir = { 0,1,0 };
 
-			/*faceVertecies[0] = M_TranslateVec3(faceVertecies[0], camera.position);
-			faceVertecies[1] = M_TranslateVec3(faceVertecies[1], camera.position);
-			faceVertecies[2] = M_TranslateVec3(faceVertecies[2], camera.position);*/
+			mat4_t cameraYawRotMat = Mat4_MakeRotationY(camera.yawAngle);
+			camera.direction = M_Vec3FromVec4(Mat4_MulVec4(cameraYawRotMat, M_Vec4FromVec3(target)));
+			target = M_AddVec3(camera.position, camera.direction);
+			mat4_t viewMat = Mat4_LookAt(camera.position, target, up_dir);
+
+			//vec3_t lightTarget = { 0, -1, 1 };
+			//vec3_t lightOrigin = { 10, 10*sinf(lightTheta), 10};
+			//lightTarget = M_AddVec3(lightOrigin, light.direction);
+			//mat4_t lightMat = Mat4_LookAt(lightOrigin, lightTarget, up_dir);
 
 
-			//BACK-FACE CULLING
-			if (G_debugEnableBackfaceCulling == 1)
+
+			mat4_t scaleMat = Mat4_MakeScale(
+				modelData->scale.x,
+				modelData->scale.y,
+				modelData->scale.z
+			);
+
+			mat4_t transMat = Mat4_MakeTranslation(
+				modelData->translation.x,
+				modelData->translation.y,
+				modelData->translation.z
+			);
+
+			mat4_t rotMatX = Mat4_MakeRotationX(modelData->rotation.x);
+			mat4_t rotMatY = Mat4_MakeRotationX(modelData->rotation.y);
+			mat4_t rotMatZ = Mat4_MakeRotationZ(modelData->rotation.z);
+
+			vec3_t faceVertecies[3];
+			int transformedVtxCnt = 0;
+
+			//pseudo-update subroutine
+			for (uint32_t i = 0; i < modelData->facesCnt; i += 1)
 			{
-				vec3_t origin = { 0,0,0 };
+				FaceTex_t face = modelData->faces[i];
+				int a = modelData->faces[i].a;
+				int b = modelData->faces[i].b;
+				int c = modelData->faces[i].c;
 
-				int isFrontFace = M_IsFrontFace(
-					faceVertecies[0],
-					faceVertecies[1], 
-					faceVertecies[2],
-					origin);
+				faceVertecies[0] = modelData->vertices[a];
+				faceVertecies[1] = modelData->vertices[b];
+				faceVertecies[2] = modelData->vertices[c];
 
-				if (isFrontFace == G_debugInvertBackFaceCulling)
+				mat4_t worldMatrix;
+
+				//TRANSFORM
+				for (int j = 0; j < 3; j++)
 				{
-					continue;
+					worldMatrix = Mat4_MakeIdentity();
+					mat4_t rotMat = Mat4_Mul4Mat4(rotMatX, rotMatY, rotMatZ, Mat4_MakeIdentity());
+					worldMatrix = Mat4_Mul4Mat4(scaleMat, rotMat, transMat, worldMatrix);
+
+					//multiply the original vector by the world matrix
+					vec4_t original_vector = M_Vec4FromVec3(faceVertecies[j]);
+					vec4_t transformed_vector = Mat4_MulVec4(worldMatrix, original_vector);
+
+					//multiply the transformed vector by the view matrix to update it according to the camera
+					transformed_vector = Mat4_MulVec4(viewMat, transformed_vector);
+
+					//save to transformed vertices array
+					faceVertecies[j] = M_Vec3FromVec4(transformed_vector);
+				}
+
+				//G_ClipFaceZ(&faceVertecies[0], &faceVertecies[1], &faceVertecies[2]);
+
+				/*faceVertecies[0] = M_TranslateVec3(faceVertecies[0], camera.position);
+				faceVertecies[1] = M_TranslateVec3(faceVertecies[1], camera.position);
+				faceVertecies[2] = M_TranslateVec3(faceVertecies[2], camera.position);*/
+
+
+				//BACK-FACE CULLING
+				if (G_debugEnableBackfaceCulling == 1)
+				{
+					vec3_t origin = { 0,0,0 };
+
+					int isFrontFace = M_IsFrontFace(
+						faceVertecies[0],
+						faceVertecies[1],
+						faceVertecies[2],
+						origin);
+
+					if (isFrontFace == G_debugInvertBackFaceCulling)
+					{
+						continue;
+					}
+				}
+
+				//CLIPPING
+				//create polygon from transformed, clipped vertices
+				polygon_t polygon = C_CreatePolyFromVertices(
+					faceVertecies[0], faceVertecies[1], faceVertecies[2],
+					face.a_uv, face.b_uv, face.c_uv
+				);
+
+				C_ClipPolygon(&polygon);
+
+				//after clipping break poly to tris
+				triangle_t tris_after_clipping[MAX_NUM_POLY_TRIS];
+				int num_tris_after_clipping = 0;
+				C_TrianglesFromPoly(&polygon, tris_after_clipping, &num_tris_after_clipping);
+
+				for (int idxVec = 0; idxVec < num_tris_after_clipping; idxVec++)
+				{
+					triangle_t tri = tris_after_clipping[idxVec];
+
+					//copy to transformed vertices array
+					transformed[transformedVtxCnt].vertices[0] = tri.points[0];//faceVertecies[0];
+					transformed[transformedVtxCnt].vertices[1] = tri.points[1];//faceVertecies[1];
+					transformed[transformedVtxCnt].vertices[2] = tri.points[2];//faceVertecies[2];
+
+					//copy texture coordinates
+					transformed[transformedVtxCnt].texCrds[0] = tri.texcoord[0];
+					transformed[transformedVtxCnt].texCrds[1] = tri.texcoord[1];
+					transformed[transformedVtxCnt].texCrds[2] = tri.texcoord[2];
+
+					//save average Z
+					transformed[transformedVtxCnt].depth =
+						(faceVertecies[0].z + faceVertecies[1].z + faceVertecies[2].z) / 3.0f;
+
+					transformedVtxCnt++;
 				}
 			}
 
-			//CLIPPING
-			//create polygon from transformed, clipped vertices
-			polygon_t polygon = C_CreatePolyFromVertices(
-				faceVertecies[0], faceVertecies[1], faceVertecies[2],
-				face.a_uv, face.b_uv, face.c_uv
-			);
+			//Not needed if Z-Buffer is implemented
+			//G_SortFacesByZ(transformed, transformedVtxCnt);
 
-			C_ClipPolygon(&polygon);
-
-			//after clipping break poly to tris
-			triangle_t tris_after_clipping[MAX_NUM_POLY_TRIS];
-			int num_tris_after_clipping = 0;
-			C_TrianglesFromPoly(&polygon, tris_after_clipping, &num_tris_after_clipping);
-
-			for (int idxVec = 0; idxVec < num_tris_after_clipping; idxVec++)
+			//PROJECT
+			for (int i = 0; i < transformedVtxCnt; i++)
 			{
-				triangle_t tri = tris_after_clipping[idxVec];
+				//convert to quaternions to mul with matrices
+				vec4_t v4d1 = M_Vec4FromVec3(transformed[i].vertices[0]);
+				vec4_t v4d2 = M_Vec4FromVec3(transformed[i].vertices[1]);
+				vec4_t v4d3 = M_Vec4FromVec3(transformed[i].vertices[2]);
 
-				//copy to transformed vertices array
-				transformed[transformedVtxCnt].vertices[0] = tri.points[0];//faceVertecies[0];
-				transformed[transformedVtxCnt].vertices[1] = tri.points[1];//faceVertecies[1];
-				transformed[transformedVtxCnt].vertices[2] = tri.points[2];//faceVertecies[2];
+				//multiply by the projection matrix
+				v4d1 = Mat4_MulVec4ProjectionMat4(v4d1, projMat);
+				v4d2 = Mat4_MulVec4ProjectionMat4(v4d2, projMat);
+				v4d3 = Mat4_MulVec4ProjectionMat4(v4d3, projMat);
 
-				//copy texture coordinates
-				transformed[transformedVtxCnt].texCrds[0] = tri.texcoord[0];
-				transformed[transformedVtxCnt].texCrds[1] = tri.texcoord[1];
-				transformed[transformedVtxCnt].texCrds[2] = tri.texcoord[2];
+				//convert to screen-space 2d vectors
+				vec2_t v2d1 = M_Vec2FromVec4(v4d1);
+				vec2_t v2d2 = M_Vec2FromVec4(v4d2);
+				vec2_t v2d3 = M_Vec2FromVec4(v4d3);
 
-				//save average Z
-				transformed[transformedVtxCnt].depth = 
-					(faceVertecies[0].z + faceVertecies[1].z + faceVertecies[2].z) / 3.0f;
+				//screen-space scale
+				M_Vec2ScaleFace(
+					&v2d1, &v2d2, &v2d3,
+					_ScreenH / 2.0f);
 
-				transformedVtxCnt++;
-			}			
-		}
+				//screen-space translate
+				M_Vec2TranslateFace(
+					&v2d1, &v2d2, &v2d3,
+					_ScreenW / 2.0f, _ScreenH / 2.0f);
 
-		//Not needed if Z-Buffer is implemented
-		//G_SortFacesByZ(transformed, transformedVtxCnt);
+				//calc light intensity
+				//float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
+				float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 
-		//PROJECT
-		for (int i = 0; i < transformedVtxCnt; i++)
-		{
-			//convert to quaternions to mul with matrices
-			vec4_t v4d1 = M_Vec4FromVec3(transformed[i].vertices[0]);
-			vec4_t v4d2 = M_Vec4FromVec3(transformed[i].vertices[1]);
-			vec4_t v4d3 = M_Vec4FromVec3(transformed[i].vertices[2]);
+				//rasterize
+				if (G_debugRasterize && !G_debugRenderTextured)
+				{
+					vec4_t v1 = M_Vec4FromVec2(v2d1);
+					vec4_t v2 = M_Vec4FromVec2(v2d2);
+					vec4_t v3 = M_Vec4FromVec2(v2d3);
 
-			//multiply by the projection matrix
-			v4d1 = Mat4_MulVec4ProjectionMat4(v4d1, projMat);
-			v4d2 = Mat4_MulVec4ProjectionMat4(v4d2, projMat);
-			v4d3 = Mat4_MulVec4ProjectionMat4(v4d3, projMat);
+					v1.z = v4d1.z;
+					v1.w = v4d1.w;
+					v2.z = v4d2.z;
+					v2.w = v4d2.w;
+					v3.z = v4d3.z;
+					v3.w = v4d3.w;
 
-			//convert to screen-space 2d vectors
-			vec2_t v2d1 = M_Vec2FromVec4(v4d1);
-			vec2_t v2d2 = M_Vec2FromVec4(v4d2);
-			vec2_t v2d3 = M_Vec2FromVec4(v4d3);
+					G_RenderTexturedTriangle(
+						v1, v2, v3,
+						transformed[i].texCrds[0],
+						transformed[i].texCrds[1],
+						transformed[i].texCrds[2],
+						0, lightPerc,
+						1, 0xFFFFFFFF);
+				}
 
-			//screen-space scale
-			M_Vec2ScaleFace(
-				&v2d1, &v2d2, &v2d3,
-				_ScreenH / 2.0f);
+				//texture map
+				if (G_debugRenderTextured)
+				{
+					vec4_t v1 = M_Vec4FromVec2(v2d1);
+					vec4_t v2 = M_Vec4FromVec2(v2d2);
+					vec4_t v3 = M_Vec4FromVec2(v2d3);
 
-			//screen-space translate
-			M_Vec2TranslateFace(
-				&v2d1, &v2d2, &v2d3,
-				_ScreenW / 2.0f, _ScreenH / 2.0f);
+					v1.z = v4d1.z;
+					v1.w = v4d1.w;
+					v2.z = v4d2.z;
+					v2.w = v4d2.w;
+					v3.z = v4d3.z;
+					v3.w = v4d3.w;
 
-			//calc light intensity
-			//float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
-			float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
+					G_RenderTexturedTriangle(
+						v1, v2, v3,
+						transformed[i].texCrds[0],
+						transformed[i].texCrds[1],
+						transformed[i].texCrds[2],
+						modelData, lightPerc,
+						0, 0);
+				}
 
-			//rasterize
-			if (G_debugRasterize && !G_debugRenderTextured)
-			{
-				vec4_t v1 = M_Vec4FromVec2(v2d1);
-				vec4_t v2 = M_Vec4FromVec2(v2d2);
-				vec4_t v3 = M_Vec4FromVec2(v2d3);
+				//wireframe
+				if (G_debugDrawWireframe)
+				{
+					uint32_t color = 0x0055FFFF; // G_LightIntensity(0x0055FFFF, lightPerc);
+					G_SetDrawColor(color);
+					G_DrawLine(v2d1, v2d2);
+					G_DrawLine(v2d2, v2d3);
+					G_DrawLine(v2d3, v2d1);
+				}
 
-				v1.z = v4d1.z;
-				v1.w = v4d1.w;
-				v2.z = v4d2.z;
-				v2.w = v4d2.w;
-				v3.z = v4d3.z;
-				v3.w = v4d3.w;
-
-				G_RenderTexturedTriangle(
-					v1, v2, v3,
-					transformed[i].texCrds[0],
-					transformed[i].texCrds[1],
-					transformed[i].texCrds[2],
-					0, lightPerc,
-					1, 0xFFFFFFFF);
-			}
-
-			//texture map
-			if (G_debugRenderTextured)
-			{
-				vec4_t v1 = M_Vec4FromVec2(v2d1);
-				vec4_t v2 = M_Vec4FromVec2(v2d2);
-				vec4_t v3 = M_Vec4FromVec2(v2d3);
-
-				v1.z = v4d1.z;
-				v1.w = v4d1.w;
-				v2.z = v4d2.z;
-				v2.w = v4d2.w;
-				v3.z = v4d3.z;
-				v3.w = v4d3.w;
-
-				G_RenderTexturedTriangle(
-					v1, v2, v3,
-					transformed[i].texCrds[0],
-					transformed[i].texCrds[1],
-					transformed[i].texCrds[2],
-					T_meshTexture, lightPerc,
-					0,0);
-			}
-			
-			//wireframe
-			if (G_debugDrawWireframe)
-			{
-				uint32_t color = 0x0055FFFF; // G_LightIntensity(0x0055FFFF, lightPerc);
-				G_SetDrawColor(color);
-				G_DrawLine(v2d1, v2d2);
-				G_DrawLine(v2d2, v2d3);
-				G_DrawLine(v2d3, v2d1);
-			}
-
-			//vertices
-			if (G_debugDrawVertices)
-			{
-				//color = G_ColorFromZ(maxZVert, 0xFF, 0x00, 0x00);
-				G_SetDrawColor(0xFF0000FF);
-				G_DrawVertex(v2d1, 2);
-				G_DrawVertex(v2d2, 2);
-				G_DrawVertex(v2d3, 2);
+				//vertices
+				if (G_debugDrawVertices)
+				{
+					//color = G_ColorFromZ(maxZVert, 0xFF, 0x00, 0x00);
+					G_SetDrawColor(0xFF0000FF);
+					G_DrawVertex(v2d1, 2);
+					G_DrawVertex(v2d2, 2);
+					G_DrawVertex(v2d3, 2);
+				}
 			}
 		}
 
@@ -738,7 +748,7 @@ void G_RasterTriangle(vec2_t p1, vec2_t p2, vec2_t p3)
 void G_RenderTexturedTriangle(
 	vec4_t p1, vec4_t p2, vec4_t p3,
 	tex2_t tp1, tex2_t tp2, tex2_t tp3, 
-	uint32_t* texture, float lightPrecFactor,
+	Model_t* model, float lightPrecFactor,
 	int isSolidColor, uint32_t color)
 {
 	M_Vec4SortTexturedTrianglePointsY(&p1, &p2, &p3, &tp1, &tp2, &tp3);
@@ -788,7 +798,7 @@ void G_RenderTexturedTriangle(
 				else
 				{
 					G_DrawTexel(
-						x, y, texture,
+						x, y, model,
 						p1, p2, p3,
 						tp1, tp2, tp3,
 						lightPrecFactor
@@ -831,7 +841,7 @@ void G_RenderTexturedTriangle(
 				else
 				{
 					G_DrawTexel(
-						x, y, texture,
+						x, y, model,
 						p1, p2, p3,
 						tp1, tp2, tp3,
 						lightPrecFactor
@@ -842,7 +852,7 @@ void G_RenderTexturedTriangle(
 	}
 }
 
-void G_DrawTexel(int x, int y, uint32_t* texture,
+void G_DrawTexel(int x, int y, Model_t* model,
 	vec4_t point_a, vec4_t point_b, vec4_t point_c,
 	tex2_t uv_a, tex2_t uv_b, tex2_t uv_c, 
 	float lightPercFactor)
@@ -867,8 +877,8 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 	interp_v /= interpolated_reciprocal_w;
 
 	//get pixel offset within the texture
-	int tex_x = abs((int)(interp_u * T_texWidth)) % T_texWidth;
-	int tex_y = abs((int)(interp_v * T_texHeight)) % T_texHeight;
+	int tex_x = abs((int)(interp_u * model->textureW)) % model->textureW;
+	int tex_y = abs((int)(interp_v * model->textureH)) % model->textureH;
 
 	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 
@@ -878,7 +888,7 @@ void G_DrawTexel(int x, int y, uint32_t* texture,
 	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
 	{
 		uint32_t color = G_LightIntensity(
-			texture[(T_texWidth * tex_y) + tex_x], 
+			model->texture[(model->textureW * tex_y) + tex_x], 
 			lightPercFactor);
 
 		G_DrawXYColor(x, y, color);
@@ -913,8 +923,8 @@ void G_DrawPixel(int x, int y, uint32_t color,
 	interp_v /= interpolated_reciprocal_w;
 
 	//get pixel offset within the texture
-	int tex_x = abs((int)(interp_u * T_texWidth)) % T_texWidth;
-	int tex_y = abs((int)(interp_v * T_texHeight)) % T_texHeight;
+	int tex_x = abs((int)(interp_u * 64)) % 64;
+	int tex_y = abs((int)(interp_v * 64)) % 64;
 
 	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 

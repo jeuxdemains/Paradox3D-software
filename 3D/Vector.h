@@ -41,6 +41,7 @@ vec2_t M_Vec2FromVec3(vec3_t v);
 vec2_t M_Vec2FromVec4(vec4_t v);
 
 /// VECTOR 3
+vec3_t M_NewVec3(float a, float b, float c);
 vec3_t M_MulVec3(vec3_t p1, vec3_t p2);
 vec3_t M_DivVec3(vec3_t p1, vec3_t p2);
 vec3_t M_AddVec3(vec3_t p1, vec3_t p2);

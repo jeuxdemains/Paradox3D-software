@@ -57,6 +57,12 @@ void M_Vec2TranslateFace(vec2_t* p1, vec2_t* p2, vec2_t* p3, float x, float y)
 /// VECTOR 3
 ///
 
+vec3_t M_NewVec3(float a, float b, float c)
+{
+	vec3_t v = { a, b, c };
+	return v;
+}
+
 vec3_t M_CrossVec3(vec3_t p1, vec3_t p2)
 {
 	vec3_t normal;

@@ -1,6 +1,6 @@
 #include "OBJModelLoader.h"
 
-void OBJ_LoadModel(char* fileName, Model_t* modelData)
+void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 {
 	FILE* file;
 	if (fopen_s(&file, fileName, "r") != 0)
@@ -64,25 +64,25 @@ void OBJ_LoadModel(char* fileName, Model_t* modelData)
 	fclose(file);
 
 	//copy to model
-	modelData->vertices = (vec3_t*)malloc(sizeof(vec3_t) * vertCnt);
+	inModelPointer->vertices = (vec3_t*)malloc(sizeof(vec3_t) * vertCnt);
 	for (int i = 0; i < vertCnt; i++)
 	{
-		modelData->vertices[i].x = vertices[i].x;
-		modelData->vertices[i].y = vertices[i].y;
-		modelData->vertices[i].z = vertices[i].z;
+		inModelPointer->vertices[i].x = vertices[i].x;
+		inModelPointer->vertices[i].y = vertices[i].y;
+		inModelPointer->vertices[i].z = vertices[i].z;
 	}
 
-	modelData->faces = (FaceTex_t*)malloc(sizeof(FaceTex_t) * faceCnt);
+	inModelPointer->faces = (FaceTex_t*)malloc(sizeof(FaceTex_t) * faceCnt);
 	for (int i = 0; i < faceCnt; i++)
 	{
-		modelData->faces[i].a = faces[i].a;
-		modelData->faces[i].b = faces[i].b;
-		modelData->faces[i].c = faces[i].c;
-		modelData->faces[i].a_uv = faces[i].a_uv;
-		modelData->faces[i].b_uv = faces[i].b_uv;
-		modelData->faces[i].c_uv = faces[i].c_uv;
+		inModelPointer->faces[i].a = faces[i].a;
+		inModelPointer->faces[i].b = faces[i].b;
+		inModelPointer->faces[i].c = faces[i].c;
+		inModelPointer->faces[i].a_uv = faces[i].a_uv;
+		inModelPointer->faces[i].b_uv = faces[i].b_uv;
+		inModelPointer->faces[i].c_uv = faces[i].c_uv;
 	}
 
-	modelData->vecCnt = vertCnt;
-	modelData->facesCnt = faceCnt;
+	inModelPointer->vecCnt = vertCnt;
+	inModelPointer->facesCnt = faceCnt;
 }

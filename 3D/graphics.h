@@ -33,12 +33,18 @@ typedef struct
 	float dirAngle;
 } Position_t;
 
+typedef struct
+{
+	char* textureName;
+	char* modelName;
+} model_list_t;
+
 
 void G_RunRenderLoop();
 void G_DrawPoint(vec2_t v);
 void G_DrawPointI(uint32_t x, uint32_t y);
 void G_DrawPointColor(vec2_t v, uint32_t color);
-void G_DrawTexel(int x, int y, uint32_t* texture,
+void G_DrawTexel(int x, int y, Model_t* model,
 	vec4_t a, vec4_t b, vec4_t c,
 	tex2_t uv_a, tex2_t uv_b, tex2_t uv_c,
 	float lightPercFactor);
@@ -54,7 +60,7 @@ void G_RasterTriangle(vec2_t p1, vec2_t p2, vec2_t p3);
 void G_RenderTexturedTriangle(
 	vec4_t p1, vec4_t p2, vec4_t p3,
 	tex2_t tp1, tex2_t tp2, tex2_t tp3,
-	uint32_t* texture, float lightPrecFactor, int isSolidColor, uint32_t color);
+	Model_t* model, float lightPrecFactor, int isSolidColor, uint32_t color);
 
 void G_ClearBuffer();
 void G_SetDrawColor(uint32_t colorHex);
@@ -71,3 +77,4 @@ void G_ClearZBuffer();
 void G_RenderZBuffer();
 void G_Shutdown(void);
 void G_Init(void);
+void G_LoadModels(void);

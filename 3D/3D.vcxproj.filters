@@ -48,6 +48,9 @@
     <ClCompile Include="upng.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Model.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDLSystem.h">

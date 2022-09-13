@@ -1,24 +1,31 @@
 #include "Texture.h"
+#include "Model.h"
 
-int T_texWidth;
-int T_texHeight;
-uint32_t* T_meshTexture = NULL;
+//int T_texWidth;
+//int T_texHeight;
+//uint32_t* T_meshTexture = NULL;
 upng_t* pngTexture = NULL;
 
-void T_LoadPngTexture(char* fileName)
+texture_t* T_LoadPngTexture(char* fileName)
 {
+    texture_t* tex = (texture_t*)malloc(sizeof(texture_t));
+
     pngTexture = upng_new_from_file(fileName);
     if (pngTexture != NULL)
     {
         upng_decode(pngTexture);
         if (upng_get_error(pngTexture) == UPNG_EOK)
         {
-            T_meshTexture = (uint32_t*)upng_get_buffer(pngTexture);
-            T_texWidth = upng_get_width(pngTexture);
-            T_texHeight = upng_get_height(pngTexture);
+            tex->textureData = (uint32_t*)upng_get_buffer(pngTexture);
+            tex->width = upng_get_width(pngTexture);
+            tex->height = upng_get_height(pngTexture);
         }
     }
+
+    return tex;
 }
+
+
 
 void T_FreeResources()
 {

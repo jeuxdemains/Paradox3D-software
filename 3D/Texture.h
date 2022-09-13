@@ -8,11 +8,18 @@ typedef struct
 	float v;
 } tex2_t;
 
-extern int T_texWidth;
-extern int T_texHeight;
+typedef struct
+{
+	uint32_t* textureData;
+	uint32_t width;
+	uint32_t height;
+} texture_t;
 
-extern uint32_t* T_meshTexture;
+//extern int T_texWidth;
+//extern int T_texHeight;
+
+//extern uint32_t* T_meshTexture;
 
 tex2_t T_Texture2Clone(tex2_t* tex);
-void T_LoadPngTexture(char* fileName);
+texture_t* T_LoadPngTexture(char* fileName);
 void T_FreeResources();
