@@ -3,15 +3,15 @@
 model_list_t models[2] =
 { 
 	{
-		.modelName = "model.obj",
+		.modelName = "level.obj",
 		.textureName = "texture.png"
 	},
 	{
 		.modelName = "model2.obj",
 		.textureName = "texture2.png"
-	} 
+	}
 };
-int modelsCnt = 2;
+int modelsCnt = 1;
 
 Position_t worldPosition =
 {
@@ -23,6 +23,7 @@ G_debugInvertBackFaceCulling = 0; //1 = normal; -1 = inverted
 G_debugDrawWireframe = 1;
 G_debugRenderTextured = 1;
 G_debugRenderZBuffer = 0;
+G_debugSlowRendering = 0;
 
 Light_t light = { { 0.0f, 1.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
@@ -132,45 +133,22 @@ void G_RunRenderLoop()
 
 				//camera.position.x = 0; //+= 0.008f * deltaTime;
 				//camera.position.y = 0; //+= 0.008f * deltaTime;
-				lightTheta += 2.0f * deltaTime;
-				light.direction.x += 3.14f*2 * cosf(lightTheta) * deltaTime;
+				//lightTheta += 2.0f * deltaTime;
+				//light.direction.x += 3.14f*2 * cosf(lightTheta) * deltaTime;
 				//light.direction.y += 2.0f * deltaTime * cosf(lightTheta);
 				//light.direction.z += 3.0f * cosf(lightTheta) * deltaTime;
 			}
 
-			//zoom out the model
-			//modelData->translation.z = 16.0f;
-			modelData->translation.z = 20.0f;
+			modelData->scale.x = 2;
+			modelData->scale.y = 2;
+			modelData->scale.z = 2;
 			
 			//compute the rotation & translation for the camera
 			//create view matrix
-			vec3_t target = { 0,0,1 };
-			vec3_t up_dir = { 0,1,0 };
+			mat4_t viewMat = C_GetCameraViewMat();
 
-			mat4_t cameraYawRotMat = Mat4_MakeRotationY(camera.yawAngle);
-			camera.direction = M_Vec3FromVec4(Mat4_MulVec4(cameraYawRotMat, M_Vec4FromVec3(target)));
-			target = M_AddVec3(camera.position, camera.direction);
-			mat4_t viewMat = Mat4_LookAt(camera.position, target, up_dir);
-
-			//vec3_t lightTarget = { 0, -1, 1 };
-			//vec3_t lightOrigin = { 10, 10*sinf(lightTheta), 10};
-			//lightTarget = M_AddVec3(lightOrigin, light.direction);
-			//mat4_t lightMat = Mat4_LookAt(lightOrigin, lightTarget, up_dir);
-
-
-
-			mat4_t scaleMat = Mat4_MakeScale(
-				modelData->scale.x,
-				modelData->scale.y,
-				modelData->scale.z
-			);
-
-			mat4_t transMat = Mat4_MakeTranslation(
-				modelData->translation.x,
-				modelData->translation.y,
-				modelData->translation.z
-			);
-
+			mat4_t scaleMat = Mat4_MakeScale(modelData->scale);
+			mat4_t transMat = Mat4_MakeTranslation(modelData->translation);
 			mat4_t rotMatX = Mat4_MakeRotationX(modelData->rotation.x);
 			mat4_t rotMatY = Mat4_MakeRotationX(modelData->rotation.y);
 			mat4_t rotMatZ = Mat4_MakeRotationZ(modelData->rotation.z);
@@ -305,6 +283,36 @@ void G_RunRenderLoop()
 				//float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 				float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
 
+				if (G_debugSlowRendering)
+				{
+					//wireframe
+					if (G_debugDrawWireframe)
+					{
+						uint32_t color = 0x0055FFFF; // G_LightIntensity(0x0055FFFF, lightPerc);
+						G_SetDrawColor(color);
+						G_DrawLine(v2d1, v2d2);
+						SDLSystemRender();
+						SDL_Delay(SLOW_REND_DELAY);
+						G_DrawLine(v2d2, v2d3);
+						SDLSystemRender();
+						SDL_Delay(SLOW_REND_DELAY);
+						G_DrawLine(v2d3, v2d1);
+						SDLSystemRender();
+						SDL_Delay(SLOW_REND_DELAY);
+					}
+
+					//vertices
+					if (G_debugDrawVertices)
+					{
+						//color = G_ColorFromZ(maxZVert, 0xFF, 0x00, 0x00);
+						G_SetDrawColor(0xFF0000FF);
+						G_DrawVertex(v2d1, 2);
+						G_DrawVertex(v2d2, 2);
+						G_DrawVertex(v2d3, 2);
+					}
+				}
+				
+
 				//rasterize
 				if (G_debugRasterize && !G_debugRenderTextured)
 				{
@@ -351,6 +359,7 @@ void G_RunRenderLoop()
 						0, 0);
 				}
 
+
 				//wireframe
 				if (G_debugDrawWireframe)
 				{
@@ -379,6 +388,8 @@ void G_RunRenderLoop()
 		SDLSystemRender();
 		G_ClearBuffer();
 		G_ClearZBuffer();
+
+		G_debugSlowRendering = 0;
 
 		//G_CapFrameRate(deltaTime);
 	}
@@ -418,8 +429,8 @@ float G_CalcFaceIllumination(vec3_t face[3], vec3_t lightDir)
 	normal = M_NormalizeVec3(normal);
 
 	float lightPerc = vertDirCW * M_DotVec3(normal, light.direction);
-	if (lightPerc < 0.1f)
-		lightPerc = 0.1f;
+	if (lightPerc < 0.3f)
+		lightPerc = 0.3f;
 	if (lightPerc > 0.9f)
 		lightPerc = 0.9f;
 
@@ -805,6 +816,12 @@ void G_RenderTexturedTriangle(
 					);
 				}
 			}
+
+			if (G_debugSlowRendering)
+			{
+				SDLSystemRender();
+				SDL_Delay(SLOW_REND_DELAY);
+			}
 		}
 	}
 	
@@ -847,6 +864,12 @@ void G_RenderTexturedTriangle(
 						lightPrecFactor
 					);
 				}
+			}
+
+			if (G_debugSlowRendering)
+			{
+				SDLSystemRender();
+				SDL_Delay(SLOW_REND_DELAY);
 			}
 		}
 	}

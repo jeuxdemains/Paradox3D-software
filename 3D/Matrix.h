@@ -8,9 +8,9 @@ typedef struct
 } mat4_t;
 
 mat4_t Mat4_MakeIdentity(void);
-mat4_t Mat4_MakeScale(float sx, float sy, float sz);
+mat4_t Mat4_MakeScale(vec3_t scale);
 vec4_t Mat4_MulVec4(mat4_t m, vec4_t v);
-mat4_t Mat4_MakeTranslation(float tx, float ty, float tz);
+mat4_t Mat4_MakeTranslation(vec3_t translation);
 mat4_t Mat4_MakeRotationX(float angle);
 mat4_t Mat4_MakeRotationY(float angle);
 mat4_t Mat4_MakeRotationZ(float angle);

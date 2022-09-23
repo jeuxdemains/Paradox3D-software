@@ -32,22 +32,22 @@ mat4_t Mat4_MakePerspective(float aspect, float fov, float zNear, float zFar)
 	return m;
 }
 
-mat4_t Mat4_MakeScale(float sx, float sy, float sz)
+mat4_t Mat4_MakeScale(vec3_t scale)
 {
 	mat4_t mat4 = Mat4_MakeIdentity();
-	mat4.m[0][0] = sx;
-	mat4.m[1][1] = sy;
-	mat4.m[2][2] = sz;
+	mat4.m[0][0] = scale.x;
+	mat4.m[1][1] = scale.y;
+	mat4.m[2][2] = scale.z;
 
 	return mat4;
 }
 
-mat4_t Mat4_MakeTranslation(float tx, float ty, float tz)
+mat4_t Mat4_MakeTranslation(vec3_t translation)
 {
 	mat4_t mat4 = Mat4_MakeIdentity();
-	mat4.m[0][3] = tx;
-	mat4.m[1][3] = ty;
-	mat4.m[2][3] = tz;
+	mat4.m[0][3] = translation.x;
+	mat4.m[1][3] = translation.y;
+	mat4.m[2][3] = translation.z;
 
 	return mat4;
 }

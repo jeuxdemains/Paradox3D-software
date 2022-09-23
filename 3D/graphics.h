@@ -7,11 +7,12 @@
 #include "clipping.h"
 #include "OBJModelLoader.h"
 
+#define SLOW_REND_DELAY 10
 #define FPS_TARGET 60
 #define LOGICAL_SCRN_W 1024
 #define LOGICAL_SCRN_H 768
-#define SCRN_W LOGICAL_SCRN_W/2;
-#define SCRN_H LOGICAL_SCRN_H/2;
+#define SCRN_W LOGICAL_SCRN_W / 3;
+#define SCRN_H LOGICAL_SCRN_H / 3;
 
 typedef struct
 {
@@ -26,6 +27,7 @@ extern int G_debugDrawVertices;
 extern int G_debugDrawWireframe;
 extern int G_debugRenderTextured;
 extern int G_debugRenderZBuffer;
+extern int G_debugSlowRendering;
 
 typedef struct
 {

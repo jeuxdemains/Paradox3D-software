@@ -14,6 +14,7 @@ int G_debugDrawVertices;
 int G_debugDrawWireframe;
 int G_debugRenderTextured;
 int G_debugRenderZBuffer;
+int G_debugSlowRendering;
 
 bool movingForward;
 bool movingBack;

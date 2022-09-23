@@ -3,6 +3,7 @@
 void SDLSystemInit()
 {
 	SDL_Init(SDL_INIT_VIDEO);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
 void SDLSystemShutdown()
@@ -90,6 +91,9 @@ void HandleDebug(SDL_Event event)
 
 	if (event.key.keysym.sym == SDLK_5)
 		G_debugRenderZBuffer = !G_debugRenderZBuffer;
+
+	if (event.key.keysym.sym == SDLK_0)
+		G_debugSlowRendering = !G_debugSlowRendering;
 }
 
 
@@ -140,6 +144,15 @@ void HandleCamera(SDL_Event event, float deltaTime)
 			movingDown = false;
 	}
 
+	if (event.type == SDL_MOUSEMOTION)
+	{
+		if (event.motion.xrel != 0)
+			camera.yawAngle += event.motion.xrel/2 * deltaTime;
+
+		if (event.motion.yrel != 0)
+			camera.pitch -= event.motion.yrel / 2 * deltaTime;
+	}
+
 	if (movingForward)
 	{
 		camera.forwardVelocity = M_MulVec3Scalar(camera.direction, 20.0f * deltaTime);
@@ -153,7 +166,10 @@ void HandleCamera(SDL_Event event, float deltaTime)
 
 	if (rotLeft)
 	{
-		camera.yawAngle -= rotSpeed * deltaTime;
+		float dir = camera.yawAngle - M_PI / 2.0f;
+		camera.position.x += 10.0f * cos(dir) * deltaTime;
+		camera.position.z += 10.0f * sin(dir) * deltaTime;
+
 	}
 	else if (rotRight)
 	{
@@ -188,8 +204,6 @@ int SDLHandleEvents(float deltaTime)
 
 	return 0;
 }
-
-
 
 void SDLSystemRender()
 {
