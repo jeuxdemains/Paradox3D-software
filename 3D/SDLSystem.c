@@ -3,7 +3,7 @@
 void SDLSystemInit()
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	//SDL_SetRelativeMouseMode(SDL_FALSE);
 }
 
 void SDLSystemShutdown()
@@ -101,6 +101,7 @@ void HandleCamera(SDL_Event event, float deltaTime)
 {
 	const float walkSpeed = 10.0f;
 	const float rotSpeed = 2.0f;
+	static int old_mousex, old_mousey;
 
 	if (event.type == SDL_KEYDOWN)
 	{
@@ -146,11 +147,18 @@ void HandleCamera(SDL_Event event, float deltaTime)
 
 	if (event.type == SDL_MOUSEMOTION)
 	{
-		if (event.motion.xrel != 0)
+		int mousex, mousey;
+		SDL_GetGlobalMouseState(&mousex, &mousey);
+		camera.yawAngle -= (old_mousex - mousex) * 0.01f;
+		camera.pitch -= (old_mousey - mousey) * 0.01f;
+		old_mousex = mousex;
+		old_mousey = mousey;
+
+		/*if (event.motion.xrel != 0.0f)
 			camera.yawAngle += event.motion.xrel/2 * deltaTime;
 
-		if (event.motion.yrel != 0)
-			camera.pitch -= event.motion.yrel / 2 * deltaTime;
+		if (event.motion.yrel != 0.0f)
+			camera.pitch -= event.motion.yrel / 2 * deltaTime;*/
 	}
 
 	if (movingForward)
@@ -166,9 +174,9 @@ void HandleCamera(SDL_Event event, float deltaTime)
 
 	if (rotLeft)
 	{
-		float dir = camera.yawAngle - M_PI / 2.0f;
-		camera.position.x += 10.0f * cos(dir) * deltaTime;
-		camera.position.z += 10.0f * sin(dir) * deltaTime;
+		float dir = camera.yawAngle - (float)M_PI / 2.0f;
+		camera.position.x += 10.0f * cosf(dir) * deltaTime;
+		camera.position.z += 10.0f * sinf(dir) * deltaTime;
 
 	}
 	else if (rotRight)
@@ -195,12 +203,9 @@ int SDLHandleEvents(float deltaTime)
 		return 1;
 
 	if (event.type == SDL_KEYDOWN)
-	{
 		HandleDebug(event);
-	}
 
 	HandleCamera(event, deltaTime);
-
 
 	return 0;
 }

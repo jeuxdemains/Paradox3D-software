@@ -54,8 +54,8 @@ mat4_t Mat4_MakeTranslation(vec3_t translation)
 
 mat4_t Mat4_MakeRotationX(float angle)
 {
-	float c = cos(angle);
-	float s = sin(angle);
+	float c = cosf(angle);
+	float s = sinf(angle);
 
 	mat4_t mat4 = Mat4_MakeIdentity();
 	mat4.m[1][1] = c;
@@ -68,8 +68,8 @@ mat4_t Mat4_MakeRotationX(float angle)
 
 mat4_t Mat4_MakeRotationY(float angle)
 {
-	float c = cos(angle);
-	float s = sin(angle);
+	float c = cosf(angle);
+	float s = sinf(angle);
 
 	mat4_t mat4 = Mat4_MakeIdentity();
 	mat4.m[0][0] = c;
@@ -82,8 +82,8 @@ mat4_t Mat4_MakeRotationY(float angle)
 
 mat4_t Mat4_MakeRotationZ(float angle)
 {
-	float c = cos(angle);
-	float s = sin(angle);
+	float c = cosf(angle);
+	float s = sinf(angle);
 
 	mat4_t mat4 = Mat4_MakeIdentity();
 	mat4.m[0][0] = c;

@@ -80,3 +80,7 @@ void G_RenderZBuffer();
 void G_Shutdown(void);
 void G_Init(void);
 void G_LoadModels(void);
+void G_InitMatrices(matrices_t* matrices, Model_t* modelData);
+int G_IsBackface(vec3_t triangle[3]); //0 = no, 1 = yes
+void G_ClipFrustum(vec3_t triangleVerts[3], FaceTex_t* faceTexture, triangle_t* clippedTriangles, int* numClipped);
+void G_CullFrustum(const triangle_t* clippedTriangles, const int numClippedTriangles, TransformedModelFace_t* frustumVisibleFaces, int* culledVecCnt);

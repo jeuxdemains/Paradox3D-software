@@ -9,9 +9,9 @@ void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 	}
 
 	char line[1024];
-	vec3_t vertices[MAX_OBJ_VTX_CNT];
-	tex2_t texUV[MAX_OBJ_VTX_CNT];
-	FaceTex_t faces[MAX_OBJ_FACE_CNT];
+	vec3_t* vertices = (vec3_t*)malloc(sizeof(vec3_t) * MAX_OBJ_VTX_CNT); //[MAX_OBJ_VTX_CNT];
+	tex2_t* texUV = (tex2_t*)malloc(sizeof(tex2_t) * MAX_OBJ_VTX_CNT); //[MAX_OBJ_VTX_CNT];
+	FaceTex_t* faces = (FaceTex_t*)malloc(sizeof(FaceTex_t) * MAX_OBJ_FACE_CNT); // [MAX_OBJ_FACE_CNT] ;
 
 	int vertCnt = 0;
 	int texCnt = 0;
@@ -85,4 +85,8 @@ void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 
 	inModelPointer->vecCnt = vertCnt;
 	inModelPointer->facesCnt = faceCnt;
+
+	free(texUV);
+	free(vertices);
+	free(faces);
 }

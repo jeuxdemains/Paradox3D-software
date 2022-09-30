@@ -7,6 +7,16 @@ typedef struct
 	float m[4][4];
 } mat4_t;
 
+typedef struct
+{
+	mat4_t worldMatrix;
+	mat4_t rotMatX, rotMatY, rotMatZ;
+	mat4_t rotMat;
+	mat4_t scaleMat;
+	mat4_t transMat;
+	mat4_t viewMat;
+} matrices_t;
+
 mat4_t Mat4_MakeIdentity(void);
 mat4_t Mat4_MakeScale(vec3_t scale);
 vec4_t Mat4_MulVec4(mat4_t m, vec4_t v);
