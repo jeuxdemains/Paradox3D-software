@@ -1,4 +1,6 @@
-#pragma once
+#ifndef TEXTURE_H
+#define TEXTURE_H
+
 #include <stdint.h>
 #include "upng.h"
 
@@ -23,3 +25,5 @@ typedef struct
 tex2_t T_Texture2Clone(tex2_t* tex);
 texture_t* T_LoadPngTexture(char* fileName);
 void T_FreeResources();
+
+#endif

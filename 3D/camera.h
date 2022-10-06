@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include "Vector.h"
 #include "Matrix.h"
 
@@ -15,3 +17,5 @@ typedef struct
 extern camera_t camera;
 
 mat4_t C_GetCameraViewMat();
+
+#endif

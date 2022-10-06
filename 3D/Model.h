@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MODEL_H
+#define MODEL_H
+
 #include "Math3D.h"
 #include "Matrix.h"
 #include "Texture.h"
@@ -51,3 +53,5 @@ static uint32_t allModelsCnt = 0;
 
 void ModelInit(Model_t* model);
 void ModelLoadPngTexture(char* fileName, Model_t* model);
+
+#endif

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef VECTOR_H
+#define VECTOR_H
+
 #include <math.h>
 
 /// TYPEDEFS
@@ -62,3 +64,5 @@ vec4_t M_AddVec4(vec4_t p1, vec4_t p2);
 //conversions
 vec4_t M_Vec4FromVec3(vec3_t vec);
 vec4_t M_Vec4FromVec2(vec2_t vec);
+
+#endif

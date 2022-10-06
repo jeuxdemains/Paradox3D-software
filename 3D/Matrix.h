@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MATRIX_H
+#define MATRIX_H
+
 #include "Vector.h"
 #include <math.h>
 
@@ -30,3 +32,5 @@ mat4_t Mat4_LookAt(vec3_t eye, vec3_t target, vec3_t up);
 mat4_t Mat4_MulMat4(mat4_t m1, mat4_t m2);
 mat4_t Mat4_Mul4Mat4(mat4_t m1, mat4_t m2, mat4_t m3, mat4_t world);
 vec4_t Mat4_MulVec4ProjectionMat4(vec4_t v, mat4_t projMat);
+
+#endif

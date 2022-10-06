@@ -1,4 +1,6 @@
-#pragma once
+#ifndef GRAPHICS_H
+#define GRAPHICS_H
+
 #include "SDLSystem.h"
 #include "Math3D.h"
 #include "Model.h"
@@ -6,6 +8,7 @@
 #include "camera.h"
 #include "clipping.h"
 #include "OBJModelLoader.h"
+#include "debug.h"
 
 #define SLOW_REND_DELAY 10
 #define FPS_TARGET 60
@@ -19,16 +22,6 @@ typedef struct
 	vec3_t direction;
 } Light_t;
 
-extern int G_debugEnableBackfaceCulling;
-extern int G_debugInvertBackFaceCulling;
-extern int G_debugStopRotation;
-extern int G_debugRasterize;
-extern int G_debugDrawVertices;
-extern int G_debugDrawWireframe;
-extern int G_debugRenderTextured;
-extern int G_debugRenderZBuffer;
-extern int G_debugSlowRendering;
-
 typedef struct
 {
 	vec3_t pos;
@@ -40,7 +33,6 @@ typedef struct
 	char* textureName;
 	char* modelName;
 } model_list_t;
-
 
 void G_RunRenderLoop();
 void G_DrawPoint(vec2_t v);
@@ -84,3 +76,5 @@ void G_InitMatrices(matrices_t* matrices, Model_t* modelData);
 int G_IsBackface(vec3_t triangle[3]); //0 = no, 1 = yes
 void G_ClipFrustum(vec3_t triangleVerts[3], FaceTex_t* faceTexture, triangle_t* clippedTriangles, int* numClipped);
 void G_CullFrustum(const triangle_t* clippedTriangles, const int numClippedTriangles, TransformedModelFace_t* frustumVisibleFaces, int* culledVecCnt);
+
+#endif

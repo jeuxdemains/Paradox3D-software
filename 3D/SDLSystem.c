@@ -1,5 +1,11 @@
 #include "SDLSystem.h"
 
+uint32_t _ScreenW, _ScreenH;
+uint32_t *screenBuffer;
+SDL_Renderer *sdlSystemRenderer;
+SDL_Window *sdlSystemWindow;
+SDL_Texture *screenTexture;
+
 void SDLSystemInit()
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -224,4 +230,40 @@ void SDLSystemRender()
 void DebugMessage(char* string)
 {
 	printf("Debug: %s\n", string);
+}
+
+uint32_t GetScreenH()
+{
+	return _ScreenH;
+}
+
+uint32_t GetScreenW()
+{
+	return _ScreenW;
+}
+
+void SetScreenSize(uint32_t width, uint32_t height)
+{
+	_ScreenW = width;
+	_ScreenH = height;
+}
+
+uint32_t* GetScreenBuffer()
+{
+	return screenBuffer;
+}
+
+SDL_Renderer* GetSDLRenderer()
+{
+	return sdlSystemRenderer;
+}
+
+SDL_Window* GetSDLWindow()
+{
+	return sdlSystemWindow;
+}
+
+SDL_Texture* GetSDLTexture()
+{
+	return screenTexture;
 }

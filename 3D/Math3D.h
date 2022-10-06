@@ -1,4 +1,6 @@
-#pragma once
+#ifndef MATH3D_H
+#define MATH3D_H
+
 #include <math.h>
 #include "Vector.h"
 #include "Texture.h"
@@ -6,7 +8,9 @@
 
 #define M_SCALE 200.0f
 
-typedef unsigned __int32 uint32_t;
+#ifdef _WIN32
+  typedef unsigned __int32 uint32_t;
+#endif
 
 typedef struct
 {
@@ -33,3 +37,5 @@ vec2_t M3D_CalcTriangleMidPoint(vec2_t p1, vec2_t p2, vec2_t p3);
 void M3D_SwapInt(int* n1, int* n2);
 vec3_t M3D_BarycentricWeights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);
 void M3D_Transform(matrices_t* matrices, vec3_t triangle[3]);
+
+#endif

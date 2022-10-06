@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CLIPPING_H
+#define CLIPPING_H
+
 #include "Vector.h"
 #include "Math3D.h"
 
@@ -33,3 +35,5 @@ void C_InitFrustumPlanes(float fovx, float fovy, float zNear, float zFar);
 polygon_t C_CreatePolyFromVertices(vec3_t v0, vec3_t v1, vec3_t v2, tex2_t auv, tex2_t buv, tex2_t cuv);
 void C_ClipPolygon(polygon_t* poly);
 void C_TrianglesFromPoly(polygon_t* poly, triangle_t tris[], int* numTris);
+
+#endif

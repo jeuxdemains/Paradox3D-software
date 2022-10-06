@@ -3,10 +3,20 @@
 void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 {
 	FILE* file;
-	if (fopen_s(&file, fileName, "r") != 0)
+
+	printf("opening object file: %s\n", fileName);
+
+#ifdef _win32
+	if (fopen_s(&file, fileName, "r") != 0) return;
+#else
+	file = fopen(fileName, "rb");
+	if (file == NULL) 
 	{
+		printf("failed to open model file: %s\n", fileName);
 		return;
 	}
+#endif
+
 
 	char line[1024];
 	vec3_t* vertices = (vec3_t*)malloc(sizeof(vec3_t) * MAX_OBJ_VTX_CNT); //[MAX_OBJ_VTX_CNT];
@@ -17,13 +27,13 @@ void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 	int texCnt = 0;
 	int faceCnt = 0;
 
-	while (fgets(line, 1024, file))
+	while (fgets(line, 1023, file))
 	{
 		//read vertex
 		if (strncmp(line, "v ", 2) == 0)
 		{
 			vec3_t vertex;
-			sscanf_s(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
+			sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
 			vertices[vertCnt++] = vertex;
 		}
 
@@ -31,7 +41,7 @@ void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 		if (strncmp(line, "vt ", 3) == 0)
 		{
 			tex2_t tex;
-			sscanf_s(line, "vt %f %f", &tex.u, &tex.v);
+			sscanf(line, "vt %f %f", &tex.u, &tex.v);
 			texUV[texCnt++] = tex;
 		}
 
@@ -42,7 +52,7 @@ void OBJ_LoadModel(char* fileName, Model_t* inModelPointer)
 			int texIndecied[3];
 			int normalIndecies[3];
 
-			sscanf_s(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", 
+			sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d",
 				&vertIndecies[0], &texIndecied[0], &normalIndecies[0],
 				&vertIndecies[1], &texIndecied[1], &normalIndecies[1],
 				&vertIndecies[2], &texIndecied[2], &normalIndecies[2]);

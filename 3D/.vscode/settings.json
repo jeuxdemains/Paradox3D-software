@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "model.h": "c",
+        "sdlsystem.h": "c",
+        "graphics.h": "c",
+        "matrix.h": "c",
+        "vector.h": "c",
+        "math.h": "c"
+    }
+}

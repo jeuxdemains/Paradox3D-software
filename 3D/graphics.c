@@ -30,18 +30,12 @@ Position_t worldPosition =
 	.pos = {0,0,0}
 };
 
-G_debugEnableBackfaceCulling = 1;
-G_debugInvertBackFaceCulling = 0; //1 = normal; -1 = inverted
-G_debugDrawWireframe = 0;
-G_debugRenderTextured = 1;
-G_debugRenderZBuffer = 0;
-G_debugSlowRendering = 0;
-
 Light_t light = { { 0.0f, 1.0f, 1.0f } };
 uint32_t drawColor = 0xFFFFFFFF;
 float vertDirCW = -1.0f; //1 = CW; -1 = CCW
 float lightTheta = 0.0f;
 float* zBuffer = NULL;
+static uint32_t* screenBuffer = NULL;
 
 float aspectx;
 float aspecty;
@@ -61,11 +55,11 @@ void G_InitZBuffer(int w, int h)
 
 void G_ClearZBuffer()
 {
-	for (uint32_t y = 0; y < _ScreenH; y++)
+	for (uint32_t y = 0; y < GetScreenH(); y++)
 	{
-		for (uint32_t x = 0; x < _ScreenW; x++)
+		for (uint32_t x = 0; x < GetScreenW(); x++)
 		{
-			zBuffer[(_ScreenW * y) + x] = 1.0f;
+			zBuffer[(GetScreenW() * y) + x] = 1.0f;
 		}
 	}
 }
@@ -88,18 +82,20 @@ void G_LoadModels()
 void G_Init(void)
 {
 	SDLSystemInit();
-	_ScreenW = SCRN_W;
-	_ScreenH = SCRN_H;
+	uint32_t w = SCRN_W;
+	uint32_t h = SCRN_H;
+	SetScreenSize(w, h);
 	int logicalScreenW = LOGICAL_SCRN_W;
 	int logicalScreenH = LOGICAL_SCRN_H;
 	SDL_Window* window = SDLSystemCreateWindow(logicalScreenW, logicalScreenH);
 	SDL_Renderer* rend = SDLSystemCreateRenderer(window);
 
-	G_InitZBuffer(_ScreenW, _ScreenH);
+	G_InitZBuffer(w, h);
+ 	screenBuffer = GetScreenBuffer();
 
 	//init aspect, fov, projection matrix
-	aspectx = (float)_ScreenW / (float)_ScreenH;
-	aspecty = (float)_ScreenH / (float)_ScreenW;
+	aspectx = (float)w / (float)h;
+	aspecty = (float)w / (float)h;
 	fovy = 3.14159f / 3.0f; //PI / 3.0f = 1.047f (60 degrees in radians)
 	fovx = atanf(tanf(fovy / 2) * aspectx) * 4.0f;
 	zNear = 1.0f;
@@ -282,12 +278,12 @@ void G_RunRenderLoop()
 				//screen-space scale
 				M_Vec2ScaleFace(
 					&v2d1, &v2d2, &v2d3,
-					_ScreenH / 2.0f);
+					GetScreenH() / 2.0f);
 
 				//screen-space translate
 				M_Vec2TranslateFace(
 					&v2d1, &v2d2, &v2d3,
-					_ScreenW / 2.0f, _ScreenH / 2.0f);
+					GetScreenW() / 2.0f, GetScreenH() / 2.0f);
 
 				//calc light intensity
 				//float lightPerc = G_CalcFaceIllumination(transformed[i].vertices, light.direction);
@@ -415,11 +411,12 @@ void G_Shutdown(void)
 
 void G_RenderZBuffer()
 {
-	for (uint32_t y = 0; y < _ScreenH; y++)
+	
+	for (uint32_t y = 0; y < GetScreenH(); y++)
 	{
-		for (uint32_t x = 0; x < _ScreenW; x++)
+		for (uint32_t x = 0; x < GetScreenW(); x++)
 		{
-			float zBuff = zBuffer[(_ScreenW * y) + x];
+			float zBuff = zBuffer[(GetScreenW() * y) + x];
 			uint32_t r = (0xFFFFFFFF & 0xFF000000) * (-zBuff);
 			uint32_t g = (0xFFFFFFFF & 0x00FF0000) * (-zBuff * 5);
 			uint32_t b = (0xFFFFFFFF & 0x0000FF00) * (-zBuff * 3);
@@ -427,7 +424,7 @@ void G_RenderZBuffer()
 
 			uint32_t clr = (r & 0xFF000000) | (g & 0x00FF0000) | (b & 0x0000FF00) | a;
 
-			screenBuffer[(_ScreenW * y) + x] = clr;
+			screenBuffer[(GetScreenW() * y) + x] = clr;
 		}
 	}
 }
@@ -557,46 +554,46 @@ void G_SetDrawColor(uint32_t colorHex)
 
 void G_DrawPoint(vec2_t v)
 {
-	if (v.x < 0.0 || v.x >= _ScreenW || v.y < 0.0 || v.y >= _ScreenH)
+	if (v.x < 0.0 || v.x >= GetScreenW() || v.y < 0.0 || v.y >= GetScreenH())
 		return;
 
-	if (_ScreenW * (uint32_t)v.y + (uint32_t)v.x > _ScreenW * _ScreenH)
+	if (GetScreenW() * (uint32_t)v.y + (uint32_t)v.x > GetScreenW() * GetScreenH())
 		return;
 
-	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = drawColor;
+	screenBuffer[GetScreenW() * (uint32_t)v.y + (uint32_t)v.x] = drawColor;
 }
 
 void G_DrawPointI(uint32_t x, uint32_t y)
 {
-	if (x < 0 || x >= _ScreenW || y < 0 || y >= _ScreenH)
+	if (x < 0 || x >= GetScreenW() || y < 0 || y >= GetScreenH())
 		return;
 
-	if (_ScreenW * (uint32_t)y + (uint32_t)x > _ScreenW * _ScreenH)
+	if (GetScreenW() * (uint32_t)y + (uint32_t)x > GetScreenW() * GetScreenH())
 		return;
 
-	screenBuffer[_ScreenW * (uint32_t)y + (uint32_t)x] = drawColor;
+	screenBuffer[GetScreenW() * (uint32_t)y + (uint32_t)x] = drawColor;
 }
 
 void G_DrawPointColor(vec2_t v, uint32_t color)
 {
-	if (v.x < 0 || v.x > _ScreenW || v.y < 0 || v.y > _ScreenH)
+	if (v.x < 0 || v.x > GetScreenW() || v.y < 0 || v.y > GetScreenH())
 		return;
 
-	if (_ScreenW * (uint32_t)v.y + (uint32_t)v.x > _ScreenW * _ScreenH)
+	if (GetScreenW() * (uint32_t)v.y + (uint32_t)v.x > GetScreenW() * GetScreenH())
 		return;
 
-	screenBuffer[_ScreenW * (uint32_t)v.y + (uint32_t)v.x] = color;
+	screenBuffer[GetScreenW() * (uint32_t)v.y + (uint32_t)v.x] = color;
 }
 
 void G_DrawXYColor(uint32_t x, uint32_t y, uint32_t color)
 {
-	if (x < 0 || y > _ScreenW || x < 0 || y > _ScreenH)
+	if (x < 0 || y > GetScreenW() || x < 0 || y > GetScreenH())
 		return;
 
-	if (_ScreenW * (uint32_t)y + (uint32_t)x > _ScreenW * _ScreenH)
+	if (GetScreenW() * (uint32_t)y + (uint32_t)x > GetScreenW() * GetScreenH())
 		return;
 
-	screenBuffer[_ScreenW * (uint32_t)y + (uint32_t)x] = color;
+	screenBuffer[GetScreenW() * (uint32_t)y + (uint32_t)x] = color;
 }
 
 void G_DrawLineXY2(int x0, int y0, int x1, int y1)
@@ -666,7 +663,7 @@ void G_DrawLineI(vec2i_t p1, vec2i_t p2)
 
 void G_ClearBuffer()
 {
-	memset(screenBuffer, 0, sizeof(uint32_t) * _ScreenH * _ScreenW);
+	memset(screenBuffer, 0, sizeof(uint32_t) * GetScreenH() * GetScreenW());
 }
 
 //p3 = midPoint
@@ -914,10 +911,10 @@ void G_DrawTexel(int x, int y, Model_t* model,
 
 	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 
-	if (y < 0 || y >= (int)_ScreenH || x < 0 || x >= (int)_ScreenW)
+	if (y < 0 || y >= (int)GetScreenH() || x < 0 || x >= (int)GetScreenW())
 		return;
 
-	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
+	if (interpolated_reciprocal_w < zBuffer[(GetScreenW() * y) + x])
 	{
 		uint32_t color = G_LightIntensity(
 			model->texture[(model->textureW * tex_y) + tex_x], 
@@ -926,7 +923,7 @@ void G_DrawTexel(int x, int y, Model_t* model,
 		G_DrawXYColor(x, y, color);
 
 		//update the Z-Buffer
-		zBuffer[(_ScreenW * y) + x] = interpolated_reciprocal_w;
+		zBuffer[(GetScreenW() * y) + x] = interpolated_reciprocal_w;
 	}
 }
 
@@ -960,15 +957,15 @@ void G_DrawPixel(int x, int y, uint32_t color,
 
 	interpolated_reciprocal_w = 1.0f - interpolated_reciprocal_w;
 
-	if (y < 0 || y >= (int)_ScreenH || x < 0 || x >= (int)_ScreenW)
+	if (y < 0 || y >= (int)GetScreenH() || x < 0 || x >= (int)GetScreenW())
 		return;
 
-	if (interpolated_reciprocal_w < zBuffer[(_ScreenW * y) + x])
+	if (interpolated_reciprocal_w < zBuffer[(GetScreenW() * y) + x])
 	{
 		color = G_LightIntensity(color, lightPercFactor);
 		G_DrawXYColor(x, y, color);
 
 		//update the Z-Buffer
-		zBuffer[(_ScreenW * y) + x] = interpolated_reciprocal_w;
+		zBuffer[(GetScreenW() * y) + x] = interpolated_reciprocal_w;
 	}
 }

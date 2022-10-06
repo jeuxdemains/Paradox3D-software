@@ -1,6 +1,5 @@
 #include "Model.h"
 
-
 void ModelInit(Model_t* model)
 {
 	model->scale = M_NewVec3(1.0f, 1.0f, 1.0f);
@@ -19,16 +18,4 @@ void ModelLoadPngTexture(char* fileName, Model_t* model)
     model->texture = tex->textureData;
     model->textureW = tex->width;
     model->textureH = tex->height;
-
-    //upng_t* pngTexture = upng_new_from_file(fileName);
-    //if (pngTexture != NULL)
-    //{
-    //    upng_decode(pngTexture);
-    //    if (upng_get_error(pngTexture) == UPNG_EOK)
-    //    {
-    //        model->texture = (uint32_t*)upng_get_buffer(pngTexture);
-    //        model->textureW = upng_get_width(pngTexture);
-    //        model->textureH = upng_get_height(pngTexture);
-    //    }
-    //}
 }
