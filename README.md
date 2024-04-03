@@ -1,11 +1,12 @@
 # Paradox3D - Software based 3D renderer and game engine
 
-This project is incomplete and rather a draft than anything else.
-It was meant to (and still is) grow to a full blown retro FPS game engine.
+This project is incomplete and rather a draft than anything else. It was meant to (and still is) grow to a full-blown retro FPS game engine.
 
-Read the code with a grain of salt as it's not refactored neither complete.
+Read the code with a grain of salt as it's not well refactored nor complete for that matter.
 
 It's all coded from scratch (with minor exceptions) in plain C.
+
+
 
 ## Some of the features include:
 
