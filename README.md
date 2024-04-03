@@ -10,6 +10,8 @@ It's all coded from scratch (with minor exceptions) in plain C.
 ## Some of the features include:
 
 - perspective-correct texture mapping with barycentric interpolation
+- bresenham's line drawing algorithm
+- realtime illumination
 - own 3D rendering engine with z-buffer
 - the rendering context is provided by SDL2
 - supports bacface-culling
