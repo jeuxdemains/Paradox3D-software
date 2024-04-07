@@ -8,6 +8,9 @@ It's all coded from scratch (with minor exceptions) in plain C.<br>
 It requires SDL2 to create an OS-agnostic rendering context and handle input events.<br>
 You can code those features yourself for the OS you're targeting if you prefer to ditch the 3rd party deptendency.
 
+## Compiling
+Currently it's configured to be build with Visual Studio on Windows and gcc on macOS.<br>
+Have a look at the Makefile in the source dir and set your SDL2 include and lib paths if you like to compile it on Linux or another OS.
 
 ## Some of the features include:
 
