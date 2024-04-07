@@ -1,11 +1,12 @@
 # Paradox3D - Software based 3D renderer and game engine
 
-This project is incomplete and rather a draft than anything else. It was meant to (and still is) grow to a full-blown retro FPS game engine.
+This project is on hold. It's provided "as-is" and further development is uncertain.
 
-Read the code with a grain of salt as it's not well refactored nor complete for that matter.
+The code is incomplete and quite messy. However, you can use it as an example or to boostrap your own software-based renderer and/or 3D game engine.
 
-It's all coded from scratch (with minor exceptions) in plain C.
-
+It's all coded from scratch (with minor exceptions) in plain C.<br>
+It requires SDL2 to create an OS-agnostic rendering context and handle input events.<br>
+You can code those features yourself for the OS you're targeting if you prefer to ditch the 3rd party deptendency.
 
 
 ## Some of the features include:
