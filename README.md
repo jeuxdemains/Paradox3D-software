@@ -16,16 +16,18 @@ Currently it's configured to be build with Visual Studio on Windows and gcc on m
 ## Some of the features include:
 
 - perspective-correct texture mapping with barycentric interpolation
-- bresenham's line drawing algorithm
+- bresenham's line drawing algorithm to perform wireframe rendering
+- scanline rasterization
 - realtime illumination
-- own 3D rendering engine with z-buffer
-- the rendering context is provided by SDL2
-- supports bacface-culling
+- own 3D rendering engine (3D matrix transformations)
+- z-buffer
+- the rendering context is provided by SDL2 (easily swappable with OS-specific one)
+- supports backface-culling
 - supports frustum polygon clipping
 - the input is handled by SDL2
-- supported 3D models are OBJ format
-- supported texture format is PNG
-- there is no spatial partitioning at this point
+- supports 3D models in OBJ format
+- supports textures in PNG format
+- there is no spatial partitioning at this point, maybe in the feature
 
 ![Screenshot 2024-04-03 at 13 55 50](https://github.com/jeuxdemains/Paradox3D-software/assets/7083803/4303b5d9-aa2e-4e8c-b52e-2fcf36ccc89c)
 
