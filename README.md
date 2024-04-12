@@ -9,8 +9,9 @@ It requires SDL2 to create an OS-agnostic rendering context and handle input eve
 You can code those features yourself for the OS you're targeting if you prefer to ditch the 3rd party deptendency.
 
 ## Compiling
-Currently it's configured to be build with Visual Studio on Windows and gcc on macOS.<br>
-Have a look at the Makefile in the source dir and set your SDL2 include and lib paths if you like to compile it on Linux or another OS.
+Currently it's configured to be build with Visual Studio on Windows and gcc on macOS or Linux.<br>
+* When using the Makefile (not building with Visual Studio) make sure to set your SDL2 paths before building.<br>
+* When using Visual Studio, again - make sure you set the SDL2 paths in the project properties include and lib directories (the VS linker and compiler options).
 
 ## Some of the features include:
 
