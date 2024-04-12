@@ -6,7 +6,7 @@ The code is incomplete and quite messy. However, you can use it as an example or
 
 It's all coded from scratch (with minor exceptions) in plain C.<br>
 It requires SDL2 to create an OS-agnostic rendering context and handle input events.<br>
-You can code those features yourself for the OS you're targeting if you prefer to ditch the 3rd party deptendency.
+You can code those features yourself utilizing the provided APIs of your target OS if you prefer to ditch the 3rd party deptendency.
 
 ## Compiling
 Currently it's configured to be build with Visual Studio on Windows and gcc on macOS or Linux.<br>
