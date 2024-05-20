@@ -1,12 +1,24 @@
 # Paradox3D - Software based 3D renderer and game engine
 
-This project is on hold. It's provided "as-is" and further development is uncertain.
+This project is just a demo. It's provided "as-is" and further development is discontinued.
 
-The code is incomplete and quite messy. However, you can use it as an example or to boostrap your own software-based renderer and/or 3D game engine.
+The code requires some refactoring. However, you can use it as an example or to boostrap your own software-based renderer and/or 3D game engine.
 
-The rendering (vector & matrix math, line-drawing algo, rasterization, texture mapping, polygon splitting, frustum clipping, etc.) is all coded from scratch in plain C.<br>
+The rendering is all coded from scratch in plain C.<br>
+That includes:<br>
+* vector & matrix math
+* drawing line primitives (bresenham's line algo)
+* triangle rasterization
+* texture mapping
+* polygon splitting
+* frustum clipping
+
 It requires SDL2 to create an OS-agnostic rendering context and handle input events.<br>
-You can implement a native one, utilizing the provided APIs of your target OS if you prefer to ditch the 3rd party deptendency.
+You can implement a native one, utilizing the provided APIs of your target OS if you prefer to ditch the 3rd party deptendency.<br>
+Graphics subsystems which you may use for some of the major OSes:
+* GDI+ for Windows
+* Core Graphics for macOS
+* XLib for Linux and flavours
 
 ## Compiling
 Currently it's configured to be build with Visual Studio on Windows and gcc on macOS or Linux.<br>
