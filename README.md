@@ -1,5 +1,13 @@
 # Paradox3D - Software based 3D renderer and game engine
 
+![Screenshot 2024-04-03 at 13 55 50](https://github.com/jeuxdemains/Paradox3D-software/assets/7083803/4303b5d9-aa2e-4e8c-b52e-2fcf36ccc89c)
+
+Tech Demo:
+https://youtu.be/mdugjHo4CDM?si=DkSsutngI7AYFAr8
+
+------
+
+## About the project and some notes
 This project is just a demo. It's provided "as-is" and further development is discontinued.
 
 The code requires some refactoring. However, you can use it as an example or to boostrap your own software-based renderer and/or 3D game engine.
@@ -39,8 +47,3 @@ Currently it's configured to be build with Visual Studio on Windows and gcc on m
 - supports 3D models in OBJ format
 - supports textures in PNG format
 - no spatial partitioning at this point
-
-![Screenshot 2024-04-03 at 13 55 50](https://github.com/jeuxdemains/Paradox3D-software/assets/7083803/4303b5d9-aa2e-4e8c-b52e-2fcf36ccc89c)
-
-Tech Demo:
-https://youtu.be/mdugjHo4CDM?si=DkSsutngI7AYFAr8
